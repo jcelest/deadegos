@@ -42,8 +42,7 @@ export default async function HomePage() {
           </h1>
 
           <div className="glow-orange-text mb-10 max-w-2xl px-2 text-center text-sm leading-relaxed tracking-wide md:text-base">
-            <p>Greatness Is In You, But To Achieve It, It Will Come At The Expense Of Your Ego.</p>
-            <p className="mt-2 whitespace-nowrap">Are You Up For The Challenge?</p>
+            <p>Time To Make A Statement. Greatness Awaits.</p>
           </div>
 
           <div className="mb-10 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:mb-14 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 md:mb-16">

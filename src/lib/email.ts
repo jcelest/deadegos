@@ -1,21 +1,24 @@
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 import { Order, OrderItem } from "@prisma/client";
 import { getSiteUrl } from "@/lib/site-url";
 import { getShippingRate } from "@/lib/shipping";
 
 type OrderWithItems = Order & { items: OrderItem[] };
 
-let resendClient: Resend | null = null;
-
-function getResend(): Resend | null {
-  const key = process.env.RESEND_API_KEY;
+function getSendGrid(): typeof sgMail | null {
+  const key = process.env.SENDGRID_API_KEY;
   if (!key) return null;
-  if (!resendClient) resendClient = new Resend(key);
-  return resendClient;
+  sgMail.setApiKey(key);
+  return sgMail;
 }
 
-function getFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL || "DeadEgos <orders@deadegos.com>";
+function parseFromAddress(): { email: string; name: string } {
+  const raw = process.env.SENDGRID_FROM_EMAIL || "orders@deadegos.co";
+  const match = raw.match(/^(.+?)\s*<([^>]+)>$/);
+  if (match) {
+    return { name: match[1].trim(), email: match[2].trim() };
+  }
+  return { name: "DeadEgos", email: raw.trim() };
 }
 
 function formatMoney(amount: number): string {
@@ -53,23 +56,29 @@ function addressHtml(order: Order): string {
   return `${order.customerName}<br>${order.addressLine1}${line2}<br>${order.city}, ${order.state} ${order.postalCode}<br>${order.country}`;
 }
 
-export async function sendOrderConfirmationEmail(
-  order: OrderWithItems
-): Promise<void> {
-  const resend = getResend();
-  if (!resend) {
-    console.warn("RESEND_API_KEY not set — skipping order confirmation email");
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  const client = getSendGrid();
+  if (!client) {
+    console.warn("SENDGRID_API_KEY not set — skipping email");
     return;
   }
 
-  await resend.emails.send({
-    from: getFromAddress(),
-    to: order.email,
-    subject: `DeadEgos Order Confirmed — #${order.id.slice(-8).toUpperCase()}`,
-    html: `
+  const from = parseFromAddress();
+  await client.send({ to, from, subject, html });
+}
+
+export async function sendOrderConfirmationEmail(
+  order: OrderWithItems
+): Promise<void> {
+  const shortId = order.id.slice(-8).toUpperCase();
+
+  await sendEmail(
+    order.email,
+    `DeadEgos Order Confirmed — #${shortId}`,
+    `
       <div style="background:#000;color:#fff;font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;">
         <h1 style="color:#FF8800;font-size:20px;letter-spacing:2px;margin:0 0 8px;">DEADEGOS</h1>
-        <p style="color:#888;font-size:12px;margin:0 0 24px;">Order #${order.id.slice(-8).toUpperCase()}</p>
+        <p style="color:#888;font-size:12px;margin:0 0 24px;">Order #${shortId}</p>
         <p style="font-size:16px;margin:0 0 16px;">Thanks for your order, ${order.customerName}.</p>
         <p style="color:#aaa;font-size:14px;margin:0 0 24px;">We've received your payment and will ship your order soon.</p>
         <h2 style="font-size:13px;letter-spacing:1px;color:#888;margin:0 0 12px;">ORDER SUMMARY</h2>
@@ -78,35 +87,29 @@ export async function sendOrderConfirmationEmail(
         <p style="color:#ccc;font-size:14px;line-height:1.6;margin:0 0 24px;">${addressHtml(order)}</p>
         <a href="${getSiteUrl()}/shop" style="display:inline-block;background:#FF8800;color:#000;padding:12px 24px;text-decoration:none;font-size:12px;letter-spacing:2px;font-weight:bold;">CONTINUE SHOPPING</a>
       </div>
-    `,
-  });
+    `
+  );
 }
 
 export async function sendOrderShippedEmail(
   order: OrderWithItems
 ): Promise<void> {
-  const resend = getResend();
-  if (!resend) {
-    console.warn("RESEND_API_KEY not set — skipping shipped email");
-    return;
-  }
-
+  const shortId = order.id.slice(-8).toUpperCase();
   const tracking = order.trackingNumber
     ? `<p style="color:#ccc;font-size:14px;margin:16px 0;">Tracking number: <strong style="color:#FF8800;">${order.trackingNumber}</strong></p>`
     : "";
 
-  await resend.emails.send({
-    from: getFromAddress(),
-    to: order.email,
-    subject: `Your DeadEgos order has shipped — #${order.id.slice(-8).toUpperCase()}`,
-    html: `
+  await sendEmail(
+    order.email,
+    `Your DeadEgos order has shipped — #${shortId}`,
+    `
       <div style="background:#000;color:#fff;font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;">
         <h1 style="color:#FF8800;font-size:20px;letter-spacing:2px;margin:0 0 8px;">DEADEGOS</h1>
-        <p style="color:#888;font-size:12px;margin:0 0 24px;">Order #${order.id.slice(-8).toUpperCase()}</p>
+        <p style="color:#888;font-size:12px;margin:0 0 24px;">Order #${shortId}</p>
         <p style="font-size:16px;margin:0 0 16px;">Your order is on the way, ${order.customerName}.</p>
         ${tracking}
         <p style="color:#aaa;font-size:14px;margin:0 0 24px;">Thank you for supporting DeadEgos.</p>
       </div>
-    `,
-  });
+    `
+  );
 }
