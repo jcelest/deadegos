@@ -1,0 +1,98 @@
+import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
+import HomeCampaignBanner from "@/components/HomeCampaignBanner";
+import MotionBackground from "@/components/MotionBackground";
+import ProductCard from "@/components/ProductCard";
+import { prisma } from "@/lib/prisma";
+export const dynamic = "force-dynamic";
+
+async function getFeaturedProducts() {
+  try {
+    return await prisma.product.findMany({
+      where: { featured: true },
+      take: 3,
+      orderBy: { createdAt: "desc" },
+    });
+  } catch {
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const featured = await getFeaturedProducts();
+
+  return (
+    <>
+      <section className="relative flex min-h-[calc(100dvh-65px)] flex-col items-center justify-center overflow-hidden px-4 py-10 text-center sm:min-h-[calc(100vh-72px)] sm:px-6 sm:py-0">
+        <MotionBackground />
+
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="animate-float mb-10 md:mb-12">
+            <BrandLogo
+              className="h-32 sm:h-52 md:h-64 lg:h-72 xl:h-80"
+              priority
+              quality="high"
+            />
+          </div>
+
+          <h1 className="slogan-text glow-primary mb-6 max-w-4xl px-2 text-xl leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+            HAVE NO ENEMIES.
+          </h1>
+
+          <p className="mb-10 max-w-lg text-sm tracking-wide text-white/50 md:text-base">
+            Seasonal streetwear from DeadEgos. Built different. Worn with purpose.
+          </p>
+
+          <div className="flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+            <Link
+              href="/shop"
+              className="glow-border rounded-none border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 px-8 py-3.5 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25"
+            >
+              SHOP NOW
+            </Link>
+            <Link
+              href="/shop"
+              className="rounded-none border border-white/20 px-8 py-3.5 text-sm tracking-widest text-white/70 transition-all hover:border-white/40 hover:text-white"
+            >
+              VIEW COLLECTION
+            </Link>
+          </div>
+
+          <div className="absolute -bottom-16 animate-pulse-glow">
+            <div className="h-8 w-px bg-gradient-to-b from-transparent via-[var(--color-de-primary)] to-transparent" />
+          </div>
+        </div>
+      </section>
+
+      <HomeCampaignBanner
+        src="/images/campaign-01.png"
+        alt="DeadEgos Summer 2026 campaign"
+        width={2560}
+        height={920}
+      />
+
+      {featured.length > 0 && (
+        <section className="relative px-4 py-16 sm:px-6 sm:py-24">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 flex items-center justify-between">
+              <h2 className="slogan-text text-xl text-white md:text-2xl">
+                FEATURED DROP
+              </h2>
+              <Link
+                href="/shop"
+                className="text-sm tracking-widest text-[var(--color-de-primary)] transition-colors hover:text-white"
+              >
+                VIEW ALL &rarr;
+              </Link>
+            </div>
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
