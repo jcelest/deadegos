@@ -23,8 +23,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative flex min-h-[calc(100dvh-65px)] flex-col items-center justify-center overflow-hidden px-4 py-10 pb-20 text-center sm:min-h-[calc(100vh-72px)] sm:px-6 sm:py-12 sm:pb-28 md:pb-32">
-        <MotionBackground />
+      <section className="relative isolate flex min-h-[calc(100dvh-65px)] flex-col items-center justify-center overflow-hidden px-4 py-10 pb-20 text-center sm:min-h-[calc(100vh-72px)] sm:px-6 sm:py-12 sm:pb-28 md:pb-32">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <MotionBackground />
+        </div>
 
         <div className="relative z-10 flex flex-col items-center">
           <div className="animate-float mb-10 md:mb-12">

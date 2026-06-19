@@ -21,11 +21,29 @@ function getExtension(file: File): string {
   return file.name.split(".").pop()?.toLowerCase() || "jpg";
 }
 
+function isProductionRuntime(): boolean {
+  return process.env.VERCEL === "1";
+}
+
 export async function saveUploadedImage(file: File): Promise<string> {
   validateImage(file);
 
   const ext = getExtension(file);
   const filename = `products/${uuidv4()}.${ext}`;
+
+  if (isProductionRuntime()) {
+    try {
+      const blob = await put(filename, file, {
+        access: "public",
+        addRandomSuffix: false,
+      });
+      return blob.url;
+    } catch {
+      throw new Error(
+        "Image upload failed. In Vercel, go to your project → Storage → create a Blob store, link it to deadegos, then redeploy."
+      );
+    }
+  }
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const blob = await put(filename, file, {

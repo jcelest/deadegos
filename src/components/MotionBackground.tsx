@@ -40,17 +40,22 @@ export default function MotionBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
     const primary = hexToRgb(theme.primary);
     const glow = hexToRgb(theme.primaryGlow);
     const navy = hexToRgb(theme.navy);
 
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
     let animationId: number;
     let width = 0;
     let height = 0;
     let time = 0;
+    let visible = true;
+    let resizeTimer: ReturnType<typeof setTimeout> | undefined;
 
     const waves: Wave[] = [
       { amplitude: 80, frequency: 0.003, speed: 0.018, phase: 0, yOffset: 0.35, opacity: 0.52, lineWidth: 2 },
@@ -63,15 +68,26 @@ export default function MotionBackground() {
 
     const resize = () => {
       const rect = canvas.parentElement?.getBoundingClientRect();
-      width = rect?.width ?? window.innerWidth;
-      height = rect?.height ?? window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+      const nextWidth = Math.round(rect?.width ?? window.innerWidth);
+      const nextHeight = Math.round(rect?.height ?? window.innerHeight);
+
+      if (nextWidth === width && nextHeight === height) return;
+
+      width = nextWidth;
+      height = nextHeight;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     const initOrbs = () => {
       orbs.length = 0;
-      for (let i = 0; i < 7; i++) {
+      const count = isMobile ? 4 : 7;
+      for (let i = 0; i < count; i++) {
         orbs.push({
           x: Math.random() * width,
           y: Math.random() * height,
@@ -86,9 +102,10 @@ export default function MotionBackground() {
 
     const drawWave = (wave: Wave, t: number) => {
       const baseY = height * wave.yOffset;
+      const step = isMobile ? 4 : 2;
 
       ctx.beginPath();
-      for (let x = 0; x <= width; x += 2) {
+      for (let x = 0; x <= width; x += step) {
         const y =
           baseY +
           Math.sin(x * wave.frequency + t * wave.speed + wave.phase) * wave.amplitude +
@@ -106,8 +123,10 @@ export default function MotionBackground() {
 
       ctx.strokeStyle = gradient;
       ctx.lineWidth = wave.lineWidth;
-      ctx.shadowColor = `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.8)`;
-      ctx.shadowBlur = 20;
+      if (!isMobile) {
+        ctx.shadowColor = `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.8)`;
+        ctx.shadowBlur = 20;
+      }
       ctx.stroke();
       ctx.shadowBlur = 0;
     };
@@ -139,6 +158,7 @@ export default function MotionBackground() {
     };
 
     const drawScanlines = () => {
+      if (isMobile) return;
       ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
       for (let y = 0; y < height; y += 4) {
         ctx.fillRect(0, y, width, 1);
@@ -146,7 +166,8 @@ export default function MotionBackground() {
     };
 
     const drawVerticalStreaks = (t: number) => {
-      for (let i = 0; i < 12; i++) {
+      const count = isMobile ? 6 : 12;
+      for (let i = 0; i < count; i++) {
         const x = (i * 137 + t * 30) % width;
         const streakHeight = 60 + (i % 5) * 20;
         const opacity = 0.06 + Math.sin(t * 0.05 + i) * 0.04;
@@ -161,6 +182,11 @@ export default function MotionBackground() {
     };
 
     const animate = () => {
+      if (!visible || prefersReducedMotion) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+
       time += 1;
 
       ctx.fillStyle = "#000000";
@@ -201,28 +227,41 @@ export default function MotionBackground() {
       animationId = requestAnimationFrame(animate);
     };
 
+    const scheduleResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resize();
+        initOrbs();
+      }, 200);
+    };
+
     resize();
     initOrbs();
     animate();
 
-    const handleResize = () => {
-      resize();
-      initOrbs();
-    };
-
-    const observer = new ResizeObserver(handleResize);
+    const observer = new ResizeObserver(scheduleResize);
     if (canvas.parentElement) observer.observe(canvas.parentElement);
+
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+      },
+      { threshold: 0.05 }
+    );
+    visibilityObserver.observe(canvas);
 
     return () => {
       cancelAnimationFrame(animationId);
+      if (resizeTimer) clearTimeout(resizeTimer);
       observer.disconnect();
+      visibilityObserver.disconnect();
     };
   }, [theme.primary, theme.primaryGlow, theme.navy]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 h-full w-full"
+      className="pointer-events-none absolute inset-0 h-full w-full [transform:translateZ(0)] [backface-visibility:hidden]"
       aria-hidden="true"
     />
   );
