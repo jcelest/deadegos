@@ -58,9 +58,6 @@ export default function Footer() {
                 SEASON
               </h3>
               <p className="text-sm text-white/60">{theme.name}</p>
-              <p className="mt-2 text-xs text-white/40">
-                Seasonal drops with rotating brand colors.
-              </p>
             </div>
           </div>
 

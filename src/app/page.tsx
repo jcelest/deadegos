@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
-import HomeCampaignBanner from "@/components/HomeCampaignBanner";
+import HeroSeasonBadges from "@/components/HeroSeasonBadges";
 import MotionBackground from "@/components/MotionBackground";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/prisma";
@@ -23,7 +23,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative flex min-h-[calc(100dvh-65px)] flex-col items-center justify-center overflow-hidden px-4 py-10 text-center sm:min-h-[calc(100vh-72px)] sm:px-6 sm:py-0">
+      <section className="relative flex min-h-[calc(100dvh-65px)] flex-col items-center justify-center overflow-hidden px-4 py-10 pb-20 text-center sm:min-h-[calc(100vh-72px)] sm:px-6 sm:py-12 sm:pb-28 md:pb-32">
         <MotionBackground />
 
         <div className="relative z-10 flex flex-col items-center">
@@ -35,24 +35,27 @@ export default async function HomePage() {
             />
           </div>
 
+          <HeroSeasonBadges />
+
           <h1 className="slogan-text glow-primary mb-6 max-w-4xl px-2 text-xl leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             HAVE NO ENEMIES.
           </h1>
 
-          <p className="mb-10 max-w-lg text-sm tracking-wide text-white/50 md:text-base">
-            Seasonal streetwear from DeadEgos. Built different. Worn with purpose.
-          </p>
+          <div className="glow-orange-text mb-10 max-w-2xl px-2 text-center text-sm leading-relaxed tracking-wide md:text-base">
+            <p>Greatness Is In You, But It Comes At The Expense Of Your Ego.</p>
+            <p className="mt-2 whitespace-nowrap">Are You Up For The Challenge?</p>
+          </div>
 
-          <div className="flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <div className="mb-10 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:mb-14 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 md:mb-16">
             <Link
               href="/shop"
-              className="glow-border rounded-none border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 px-8 py-3.5 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25"
+              className="glow-border-green rounded-none border border-[var(--color-de-green)] bg-[var(--color-de-green)]/10 px-8 py-3.5 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-green)]/25"
             >
               SHOP NOW
             </Link>
             <Link
               href="/shop"
-              className="rounded-none border border-white/20 px-8 py-3.5 text-sm tracking-widest text-white/70 transition-all hover:border-white/40 hover:text-white"
+              className="glow-border rounded-none border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 px-8 py-3.5 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25"
             >
               VIEW COLLECTION
             </Link>
@@ -63,13 +66,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      <HomeCampaignBanner
-        src="/images/campaign-01.png"
-        alt="DeadEgos Summer 2026 campaign"
-        width={2560}
-        height={920}
-      />
 
       {featured.length > 0 && (
         <section className="relative px-4 py-16 sm:px-6 sm:py-24">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import AdminLogin from "@/components/admin/AdminLogin";
+import AdminOrders from "@/components/admin/AdminOrders";
 import ProductForm from "@/components/admin/ProductForm";
 import BrandLogo from "@/components/BrandLogo";
 import { getPrimaryImageUrl, parseImageUrls } from "@/lib/product-images";
@@ -24,6 +25,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"listings" | "orders">("listings");
 
   const fetchProducts = useCallback(async () => {
     const res = await fetch("/api/products");
@@ -89,7 +91,7 @@ export default function AdminDashboard() {
             <BrandLogo className="h-10" />
             <div>
               <h1 className="slogan-text text-xl text-white">ADMIN PORTAL</h1>
-              <p className="text-xs text-white/40">Upload images &amp; manage listings</p>
+              <p className="text-xs text-white/40">Upload images, manage listings &amp; orders</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -111,6 +113,35 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        <div className="mb-8 flex gap-2 border-b border-white/10">
+          <button
+            type="button"
+            onClick={() => setActiveTab("listings")}
+            className={`px-4 py-2 text-xs tracking-widest transition-colors ${
+              activeTab === "listings"
+                ? "border-b-2 border-[var(--color-de-primary)] text-white"
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            LISTINGS
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("orders")}
+            className={`px-4 py-2 text-xs tracking-widest transition-colors ${
+              activeTab === "orders"
+                ? "border-b-2 border-[var(--color-de-primary)] text-white"
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            ORDERS
+          </button>
+        </div>
+
+        {activeTab === "orders" ? (
+          <AdminOrders />
+        ) : (
+        <>
         {showForm && (
           <div className="mb-10">
             <ProductForm
@@ -191,6 +222,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

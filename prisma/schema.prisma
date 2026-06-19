@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -19,4 +19,49 @@ model Product {
   inStock     Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  CANCELLED
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  status                OrderStatus @default(PENDING)
+  email                 String
+  phone                 String?
+  smsOptIn              Boolean     @default(false)
+  customerName          String
+  addressLine1          String
+  addressLine2          String?
+  city                  String
+  state                 String
+  postalCode            String
+  country               String      @default("US")
+  shippingMethod        String
+  shippingCost          Float
+  subtotal              Float
+  total                 Float
+  stripeSessionId       String?     @unique
+  stripePaymentIntentId String?
+  trackingNumber        String?
+  shippedAt             DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  items                 OrderItem[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  name      String
+  size      String
+  price     Float
+  quantity  Int
+  imageUrl  String
 }

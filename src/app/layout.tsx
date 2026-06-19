@@ -3,12 +3,9 @@ import type { Metadata, Viewport } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StripDevBrowserAttrs from "@/components/StripDevBrowserAttrs";
-import { getCurrentTheme } from "@/lib/theme";
 import ThemeVariables from "@/components/ThemeVariables";
 import Providers from "@/components/Providers";
 import "./globals.css";
-
-const theme = getCurrentTheme();
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,7 +29,13 @@ export const metadata: Metadata = {
   description:
     "Official DeadEgos clothing. Streetwear with purpose. Have no enemies.",
   icons: {
-    icon: theme.logo,
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.ico",
   },
 };
 

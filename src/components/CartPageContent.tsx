@@ -139,12 +139,12 @@ export default function CartPageContent() {
             <span className="text-sm tracking-widest text-white/50">SUBTOTAL</span>
             <span className="text-xl text-white sm:text-2xl">${total.toFixed(2)}</span>
           </div>
-          <button
-            type="button"
-            className="listing-cart-btn mb-4 w-full border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 py-4 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25"
+          <Link
+            href="/checkout"
+            className="listing-cart-btn mb-4 block w-full border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 py-4 text-center text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25"
           >
             CHECKOUT
-          </button>
+          </Link>
           <Link
             href="/shop"
             className="block text-center text-sm tracking-widest text-white/50 transition-colors hover:text-[var(--color-de-primary)]"
