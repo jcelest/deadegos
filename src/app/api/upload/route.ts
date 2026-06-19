@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { saveUploadedImage } from "@/lib/upload";
 
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {

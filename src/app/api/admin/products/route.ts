@@ -5,6 +5,8 @@ import { serializeImageUrls } from "@/lib/product-images";
 import { saveUploadedImage } from "@/lib/upload";
 import { prisma } from "@/lib/prisma";
 
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {
