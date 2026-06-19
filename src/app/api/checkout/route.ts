@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { validateCheckoutItems, CheckoutCustomerInput, CheckoutLineInput } from "@/lib/checkout";
 import { getShippingRate } from "@/lib/shipping";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       include: { items: true },
     });
 
-    const lineItems = lines.map((line) => {
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = lines.map((line) => {
       const image =
         line.imageUrl.startsWith("http")
           ? line.imageUrl
