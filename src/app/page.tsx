@@ -42,7 +42,7 @@ export default async function HomePage() {
           </h1>
 
           <div className="glow-orange-text mb-10 max-w-2xl px-2 text-center text-sm leading-relaxed tracking-wide md:text-base">
-            <p>Greatness Is In You, But It Comes At The Expense Of Your Ego.</p>
+            <p>Greatness Is In You, But To Achieve It, It Will Come At The Expense Of Your Ego.</p>
             <p className="mt-2 whitespace-nowrap">Are You Up For The Challenge?</p>
           </div>
 
