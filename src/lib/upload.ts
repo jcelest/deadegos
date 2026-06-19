@@ -1,8 +1,14 @@
 import { put } from "@vercel/blob";
-import { getVercelOidcToken } from "@vercel/oidc";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import {
+  type BlobAccessMode,
+  getBlobAuthOptions,
+  getConfiguredBlobAccess,
+  isPrivateStoreAccessError,
+  toMediaProxyUrl,
+} from "@/lib/blob-access";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -40,53 +46,60 @@ async function fileToBuffer(file: File): Promise<Buffer> {
   return Buffer.from(bytes);
 }
 
-async function resolveOidcToken(): Promise<string | undefined> {
-  try {
-    return await getVercelOidcToken();
-  } catch {
-    return runtimeEnv("VERCEL_OIDC_TOKEN");
+function resolveStoredUrl(access: BlobAccessMode, pathname: string, blobUrl: string): string {
+  if (access === "private") {
+    return toMediaProxyUrl(pathname);
   }
+  return blobUrl;
 }
 
-async function uploadToVercelBlob(filename: string, file: File): Promise<string> {
+async function putImage(
+  filename: string,
+  file: File,
+  access: BlobAccessMode
+): Promise<string> {
   const body = await fileToBuffer(file);
-  const storeId = runtimeEnv("BLOB_STORE_ID");
-  const readWriteToken = runtimeEnv("BLOB_READ_WRITE_TOKEN");
+  const auth = await getBlobAuthOptions();
 
-  const options = {
-    access: "public" as const,
-    addRandomSuffix: false,
-    contentType: file.type || undefined,
-  };
+  if (!auth.token && !(auth.oidcToken && auth.storeId)) {
+    const storeId = runtimeEnv("BLOB_STORE_ID");
+    if (!storeId) {
+      throw new Error(
+        "Blob store is not linked. In Vercel → Storage → your Blob store → Projects, connect it to deadegos (Production + Preview), then redeploy."
+      );
+    }
 
-  if (readWriteToken) {
-    const blob = await put(filename, body, {
-      ...options,
-      token: readWriteToken,
-    });
-    return blob.url;
-  }
-
-  const oidcToken = await resolveOidcToken();
-
-  if (oidcToken && storeId) {
-    const blob = await put(filename, body, {
-      ...options,
-      oidcToken,
-      storeId,
-    });
-    return blob.url;
-  }
-
-  if (!storeId) {
     throw new Error(
-      "Blob store is not linked. In Vercel → Storage → your Blob store → Projects, connect it to deadegos (Production + Preview), then redeploy."
+      "Blob authentication failed. Redeploy after linking the store. If it still fails, add BLOB_READ_WRITE_TOKEN from your Blob store settings in Vercel."
     );
   }
 
-  throw new Error(
-    "Blob authentication failed. Redeploy after linking the store. If it still fails, add BLOB_READ_WRITE_TOKEN from your Blob store settings in Vercel."
-  );
+  const blob = await put(filename, body, {
+    access,
+    addRandomSuffix: false,
+    contentType: file.type || undefined,
+    ...auth,
+  });
+
+  return resolveStoredUrl(access, blob.pathname, blob.url);
+}
+
+async function uploadToVercelBlob(filename: string, file: File): Promise<string> {
+  const configuredAccess = getConfiguredBlobAccess();
+
+  if (configuredAccess) {
+    return putImage(filename, file, configuredAccess);
+  }
+
+  try {
+    return await putImage(filename, file, "public");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (isPrivateStoreAccessError(message)) {
+      return putImage(filename, file, "private");
+    }
+    throw error;
+  }
 }
 
 export async function saveUploadedImage(file: File): Promise<string> {
