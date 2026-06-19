@@ -12,7 +12,7 @@ export default function Navbar() {
             className="h-9 shrink-0 transition-transform duration-300 group-hover:scale-110 sm:h-10 md:h-12"
             priority
           />
-          <span className="slogan-text hidden truncate text-sm text-white/90 sm:block">
+          <span className="slogan-text truncate text-xs text-white/90 sm:text-sm">
             DeadEgos
           </span>
         </Link>
