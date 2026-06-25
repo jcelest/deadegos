@@ -3,7 +3,7 @@ import path from "path";
 import { writeFile } from "fs/promises";
 import toIco from "to-ico";
 
-const src = path.join(process.cwd(), "Logo Render.png");
+const src = path.join(process.cwd(), "PB4F LOGO BLUE.png");
 const appDir = path.join(process.cwd(), "src", "app");
 const publicDir = path.join(process.cwd(), "public");
 

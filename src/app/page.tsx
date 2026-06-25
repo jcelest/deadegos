@@ -43,14 +43,14 @@ export default async function HomePage() {
             HAVE NO ENEMIES.
           </h1>
 
-          <div className="glow-orange-text mb-10 max-w-2xl px-2 text-center text-sm leading-relaxed tracking-wide md:text-base">
+          <div className="glow-accent-text mb-10 max-w-2xl px-2 text-center text-sm leading-relaxed tracking-wide md:text-base">
             <p>Time To Make A Statement. Greatness Awaits.</p>
           </div>
 
           <div className="mb-10 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:mb-14 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 md:mb-16">
             <Link
               href="/shop"
-              className="glow-border-green rounded-none border border-[var(--color-de-green)] bg-[var(--color-de-green)]/10 px-8 py-3.5 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-green)]/25"
+              className="glow-border-white rounded-none border border-white/80 bg-white/10 px-8 py-3.5 text-sm tracking-widest text-white transition-all hover:bg-white/20"
             >
               SHOP NOW
             </Link>

@@ -23,7 +23,7 @@ export default function OrderSuccessContent() {
       <div className="flex flex-col gap-4 sm:flex-row">
         <Link
           href="/shop"
-          className="glow-border-green border border-green-500/60 bg-green-500/10 px-8 py-3 text-sm tracking-widest text-white"
+          className="glow-border border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 px-8 py-3 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25"
         >
           CONTINUE SHOPPING
         </Link>

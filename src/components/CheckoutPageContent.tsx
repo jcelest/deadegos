@@ -224,7 +224,7 @@ export default function CheckoutPageContent() {
           <button
             type="submit"
             disabled={loading}
-            className="glow-border-green w-full border border-green-500/60 bg-green-500/10 py-4 text-sm tracking-widest text-white transition-all hover:bg-green-500/20 disabled:opacity-50"
+            className="glow-border w-full border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 py-4 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25 disabled:opacity-50"
           >
             {loading ? "REDIRECTING TO STRIPE..." : `PAY $${orderTotal.toFixed(2)}`}
           </button>

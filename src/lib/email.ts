@@ -2,6 +2,7 @@ import sgMail from "@sendgrid/mail";
 import { Order, OrderItem } from "@prisma/client";
 import { getSiteUrl } from "@/lib/site-url";
 import { getShippingRate } from "@/lib/shipping";
+import { getCurrentTheme } from "@/lib/theme";
 
 type OrderWithItems = Order & { items: OrderItem[] };
 
@@ -40,13 +41,14 @@ function orderItemsHtml(items: OrderItem[]): string {
 function orderSummaryHtml(order: OrderWithItems): string {
   const shippingLabel =
     getShippingRate(order.shippingMethod)?.name ?? order.shippingMethod;
+  const accent = getCurrentTheme().primary;
 
   return `
     <table style="width:100%;border-collapse:collapse;color:#ccc;font-size:14px;">
       ${orderItemsHtml(order.items)}
       <tr><td style="padding:8px 0;">Subtotal</td><td style="text-align:right;">${formatMoney(order.subtotal)}</td></tr>
       <tr><td style="padding:8px 0;">Shipping (${shippingLabel})</td><td style="text-align:right;">${order.shippingCost === 0 ? "FREE" : formatMoney(order.shippingCost)}</td></tr>
-      <tr><td style="padding:12px 0;font-weight:bold;color:#FF8800;">Total</td><td style="padding:12px 0;text-align:right;font-weight:bold;color:#FF8800;">${formatMoney(order.total)}</td></tr>
+      <tr><td style="padding:12px 0;font-weight:bold;color:${accent};">Total</td><td style="padding:12px 0;text-align:right;font-weight:bold;color:${accent};">${formatMoney(order.total)}</td></tr>
     </table>
   `;
 }
@@ -71,13 +73,14 @@ export async function sendOrderConfirmationEmail(
   order: OrderWithItems
 ): Promise<void> {
   const shortId = order.id.slice(-8).toUpperCase();
+  const accent = getCurrentTheme().primary;
 
   await sendEmail(
     order.email,
     `DeadEgos Order Confirmed — #${shortId}`,
     `
       <div style="background:#000;color:#fff;font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;">
-        <h1 style="color:#FF8800;font-size:20px;letter-spacing:2px;margin:0 0 8px;">DEADEGOS</h1>
+        <h1 style="color:${accent};font-size:20px;letter-spacing:2px;margin:0 0 8px;">DEADEGOS</h1>
         <p style="color:#888;font-size:12px;margin:0 0 24px;">Order #${shortId}</p>
         <p style="font-size:16px;margin:0 0 16px;">Thanks for your order, ${order.customerName}.</p>
         <p style="color:#aaa;font-size:14px;margin:0 0 24px;">We've received your payment and will ship your order soon.</p>
@@ -85,7 +88,7 @@ export async function sendOrderConfirmationEmail(
         ${orderSummaryHtml(order)}
         <h2 style="font-size:13px;letter-spacing:1px;color:#888;margin:24px 0 12px;">SHIPPING TO</h2>
         <p style="color:#ccc;font-size:14px;line-height:1.6;margin:0 0 24px;">${addressHtml(order)}</p>
-        <a href="${getSiteUrl()}/shop" style="display:inline-block;background:#FF8800;color:#000;padding:12px 24px;text-decoration:none;font-size:12px;letter-spacing:2px;font-weight:bold;">CONTINUE SHOPPING</a>
+        <a href="${getSiteUrl()}/shop" style="display:inline-block;background:${accent};color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;letter-spacing:2px;font-weight:bold;">CONTINUE SHOPPING</a>
       </div>
     `
   );
@@ -95,8 +98,9 @@ export async function sendOrderShippedEmail(
   order: OrderWithItems
 ): Promise<void> {
   const shortId = order.id.slice(-8).toUpperCase();
+  const accent = getCurrentTheme().primary;
   const tracking = order.trackingNumber
-    ? `<p style="color:#ccc;font-size:14px;margin:16px 0;">Tracking number: <strong style="color:#FF8800;">${order.trackingNumber}</strong></p>`
+    ? `<p style="color:#ccc;font-size:14px;margin:16px 0;">Tracking number: <strong style="color:${accent};">${order.trackingNumber}</strong></p>`
     : "";
 
   await sendEmail(
@@ -104,7 +108,7 @@ export async function sendOrderShippedEmail(
     `Your DeadEgos order has shipped — #${shortId}`,
     `
       <div style="background:#000;color:#fff;font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;">
-        <h1 style="color:#FF8800;font-size:20px;letter-spacing:2px;margin:0 0 8px;">DEADEGOS</h1>
+        <h1 style="color:${accent};font-size:20px;letter-spacing:2px;margin:0 0 8px;">DEADEGOS</h1>
         <p style="color:#888;font-size:12px;margin:0 0 24px;">Order #${shortId}</p>
         <p style="font-size:16px;margin:0 0 16px;">Your order is on the way, ${order.customerName}.</p>
         ${tracking}

@@ -22,12 +22,12 @@ export const SEASONS: Record<Season, SeasonTheme> = {
   },
   blue: {
     id: "blue",
-    name: "Blue Season",
-    primary: "#0066FF",
-    primaryGlow: "#3388FF",
-    navy: "#001A4D",
+    name: "USA 250 Summer",
+    primary: "#0038FF",
+    primaryGlow: "#5C8DFF",
+    navy: "#001450",
     logo: "/logos/logo-blue.png",
-    logoAlt: "DeadEgos blue logo",
+    logoAlt: "DeadEgos USA 250 blue logo",
   },
   pink: {
     id: "pink",
@@ -49,7 +49,7 @@ export const SEASONS: Record<Season, SeasonTheme> = {
   },
 };
 
-export const CURRENT_SEASON: Season = "orange";
+export const CURRENT_SEASON: Season = "blue";
 
 export function getCurrentTheme(): SeasonTheme {
   return SEASONS[CURRENT_SEASON];
