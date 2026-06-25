@@ -119,14 +119,19 @@ export function getGalleryImages(
   colors: string[]
 ): string[] {
   if (colors.length > 0) {
-    return dedupeUrls(
-      colors
-        .map((color) => colorImages[color])
-        .filter((url): url is string => Boolean(url))
-    );
+    const colorThumbs = colors
+      .map((color) => colorImages[color])
+      .filter((url): url is string => Boolean(url));
+    const extras = stripColorImagesFromGallery(galleryImages, colorImages);
+
+    return dedupeUrls([...colorThumbs, ...extras]);
   }
 
   return dedupeUrls(galleryImages);
+}
+
+export function getGalleryColorCount(colors: string[], colorImages: Record<string, string>): number {
+  return colors.filter((color) => Boolean(colorImages[color])).length;
 }
 
 export function getPrimaryImageUrl(

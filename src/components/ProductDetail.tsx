@@ -6,6 +6,7 @@ import ProductGallery from "@/components/ProductGallery";
 import { useCart } from "@/context/CartContext";
 import {
   getCoverImage,
+  getGalleryColorCount,
   getGalleryImages,
   getShopCoverImage,
 } from "@/lib/product-images";
@@ -48,9 +49,14 @@ export default function ProductDetail({
     [images, colorImages, colors]
   );
 
+  const colorThumbCount = useMemo(
+    () => getGalleryColorCount(colors, colorImages),
+    [colors, colorImages]
+  );
+
   const warmCache = useMemo(
-    () => [...new Set([...galleryImages, ...Object.values(colorImages)])],
-    [galleryImages, colorImages]
+    () => [...new Set([...images, ...galleryImages, ...Object.values(colorImages)])],
+    [images, galleryImages, colorImages]
   );
 
   const activeImage =
@@ -68,16 +74,18 @@ export default function ProductDetail({
   useEffect(() => {
     if (colors.length > 0 && selectedColor) {
       const index = colors.indexOf(selectedColor);
-      if (index >= 0) setGalleryIndex(index);
+      if (index >= 0 && index < colorThumbCount) {
+        setGalleryIndex(index);
+      }
       return;
     }
 
     setGalleryIndex(0);
-  }, [selectedColor, colors]);
+  }, [selectedColor, colors, colorThumbCount]);
 
   const handleGalleryIndexChange = (index: number) => {
     setGalleryIndex(index);
-    if (colors[index]) {
+    if (index < colorThumbCount && colors[index]) {
       setSelectedColor(colors[index]);
       setError("");
     }
