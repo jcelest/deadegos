@@ -7,6 +7,7 @@ interface OrderItem {
   id: string;
   name: string;
   size: string;
+  color?: string;
   price: number;
   quantity: number;
 }
@@ -120,7 +121,9 @@ export default function AdminOrders() {
             <div className="mb-4 space-y-1 border-t border-white/10 pt-4">
               {order.items.map((item) => (
                 <p key={item.id} className="text-sm text-white/70">
-                  {item.name} — Size {item.size} × {item.quantity} (${item.price.toFixed(2)})
+                  {item.name}
+                  {item.color ? ` — ${item.color}` : ""} — Size {item.size} × {item.quantity} ($
+                  {item.price.toFixed(2)})
                 </p>
               ))}
               <p className="pt-2 text-xs text-white/40">

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import ProductDetail from "@/components/ProductDetail";
-import { parseImageUrls } from "@/lib/product-images";
+import { parseColorImages, parseColors, parseImageUrls } from "@/lib/product-images";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,8 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const sizes = product.sizes.split(",").map((s) => s.trim());
+  const colors = parseColors(product.colors);
+  const colorImages = parseColorImages(product.colorImages);
   const images = parseImageUrls(product.imageUrls);
 
   return (
@@ -37,8 +39,11 @@ export default async function ProductPage({
         sizes: product.sizes,
         inStock: product.inStock,
         imageUrls: product.imageUrls,
+        colorImages: product.colorImages,
       }}
       images={images}
+      colors={colors}
+      colorImages={colorImages}
       sizes={sizes}
     />
   );

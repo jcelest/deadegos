@@ -1,11 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { getPrimaryImageUrl } from "@/lib/product-images";
+import {
+  getImageForColor,
+  getPrimaryImageUrl,
+  parseColorImages,
+  parseColors,
+} from "@/lib/product-images";
 import { calculateShippingCost } from "@/lib/shipping";
 
 export interface CheckoutLineInput {
   productId: string;
   size: string;
+  color?: string;
   quantity: number;
+  imageUrl?: string;
 }
 
 export interface CheckoutCustomerInput {
@@ -26,6 +33,7 @@ export interface ValidatedCheckoutLine {
   productId: string;
   name: string;
   size: string;
+  color: string;
   price: number;
   quantity: number;
   imageUrl: string;
@@ -70,12 +78,26 @@ export async function validateCheckoutItems(
       return { ok: false, error: `Size ${item.size} is not available for ${product.name}` };
     }
 
-    const imageUrl = getPrimaryImageUrl(product.imageUrls);
+    const availableColors = parseColors(product.colors);
+    const color = (item.color || "").trim();
+
+    if (availableColors.length > 0) {
+      if (!color || !availableColors.includes(color)) {
+        return { ok: false, error: `Color ${color || "(none)"} is not available for ${product.name}` };
+      }
+    }
+
+    const colorImages = parseColorImages(product.colorImages);
+    const imageUrl =
+      item.imageUrl ||
+      getImageForColor(colorImages, color) ||
+      getPrimaryImageUrl(product.imageUrls, product.colorImages);
 
     lines.push({
       productId: product.id,
       name: product.name,
       size: item.size,
+      color,
       price: product.price,
       quantity: item.quantity,
       imageUrl,

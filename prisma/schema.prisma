@@ -14,6 +14,8 @@ model Product {
   price       Float
   category    String   @default("apparel")
   sizes       String   @default("S,M,L,XL")
+  colors      String   @default("")
+  colorImages String   @default("{}")
   imageUrls   String
   featured    Boolean  @default(false)
   inStock     Boolean  @default(true)
@@ -61,6 +63,7 @@ model OrderItem {
   productId String
   name      String
   size      String
+  color     String @default("")
   price     Float
   quantity  Int
   imageUrl  String

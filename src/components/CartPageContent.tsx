@@ -94,7 +94,7 @@ export default function CartPageContent() {
                       className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-4"
                     >
                       <p className="text-sm tracking-widest text-white/70">
-                        SIZE {item.size}
+                        {item.color ? `${item.color} / ` : ""}SIZE {item.size}
                       </p>
 
                       <div className="flex items-center gap-3">

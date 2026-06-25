@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
             productId: line.productId,
             name: line.name,
             size: line.size,
+            color: line.color,
             price: line.price,
             quantity: line.quantity,
             imageUrl: line.imageUrl,
@@ -98,7 +99,9 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: "usd",
           product_data: {
-            name: `${line.name} — Size ${line.size}`,
+            name: line.color
+              ? `${line.name} — ${line.color} / Size ${line.size}`
+              : `${line.name} — Size ${line.size}`,
             images: [image],
           },
           unit_amount: Math.round(line.price * 100),

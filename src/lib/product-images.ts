@@ -36,6 +36,88 @@ export function serializeImageUrls(urls: string[]): string {
   return JSON.stringify(unique.slice(0, MAX_PRODUCT_IMAGES));
 }
 
-export function getPrimaryImageUrl(value: string | null | undefined): string {
-  return parseImageUrls(value)[0] || getCurrentTheme().logo;
+export function parseColors(value: string | null | undefined): string[] {
+  if (!value) return [];
+
+  return [...new Set(value.split(",").map((color) => color.trim()).filter(Boolean))];
+}
+
+export function serializeColors(colors: string[]): string {
+  return parseColors(colors.join(",")).join(",");
+}
+
+export function parseColorImages(value: string | null | undefined): Record<string, string> {
+  if (!value) return {};
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const result: Record<string, string> = {};
+    for (const [color, url] of Object.entries(parsed)) {
+      if (typeof url === "string" && url.trim()) {
+        result[color.trim()] = normalizeImageUrl(url);
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+export function serializeColorImages(colorImages: Record<string, string>): string {
+  const normalized: Record<string, string> = {};
+
+  for (const [color, url] of Object.entries(colorImages)) {
+    const trimmedColor = color.trim();
+    const trimmedUrl = url.trim();
+    if (trimmedColor && trimmedUrl) {
+      normalized[trimmedColor] = trimmedUrl;
+    }
+  }
+
+  return JSON.stringify(normalized);
+}
+
+export function getImageForColor(
+  colorImages: Record<string, string>,
+  color: string | null | undefined
+): string | undefined {
+  if (!color) return undefined;
+  return colorImages[color];
+}
+
+export function getDisplayImages(
+  galleryImages: string[],
+  colorImages: Record<string, string>,
+  selectedColor: string | null
+): string[] {
+  const colorImage = selectedColor ? getImageForColor(colorImages, selectedColor) : undefined;
+
+  if (!colorImage) {
+    return galleryImages;
+  }
+
+  const rest = galleryImages.filter((url) => url !== colorImage);
+  return [colorImage, ...rest];
+}
+
+export function getPrimaryImageUrl(
+  value: string | null | undefined,
+  colorImagesValue?: string | null
+): string {
+  const gallery = parseImageUrls(value);
+  const colorImages = parseColorImages(colorImagesValue);
+  const firstColorImage = Object.values(colorImages)[0];
+
+  return gallery[0] || firstColorImage || getCurrentTheme().logo;
+}
+
+export function getShopCoverImage(
+  imageUrls: string | null | undefined,
+  colorImagesValue?: string | null
+): string {
+  return getPrimaryImageUrl(imageUrls, colorImagesValue);
 }

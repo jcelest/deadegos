@@ -4,14 +4,15 @@ export interface CartItem {
   name: string;
   price: number;
   size: string;
+  color: string;
   imageUrl: string;
   quantity: number;
 }
 
 export const CART_STORAGE_KEY = "deadegos-cart";
 
-export function createLineId(productId: string, size: string): string {
-  return `${productId}::${size}`;
+export function createLineId(productId: string, size: string, color = ""): string {
+  return `${productId}::${size}::${color}`;
 }
 
 export function loadCartFromStorage(): CartItem[] {
@@ -26,11 +27,12 @@ export function loadCartFromStorage(): CartItem[] {
     return parsed
       .filter((item) => item && typeof item === "object")
       .map((item) => ({
-        lineId: item.lineId || createLineId(item.productId, item.size),
+        lineId: item.lineId || createLineId(item.productId, item.size, item.color || ""),
         productId: String(item.productId),
         name: String(item.name),
         price: Number(item.price),
         size: String(item.size),
+        color: String(item.color || ""),
         imageUrl: String(item.imageUrl),
         quantity: Math.max(1, Number(item.quantity) || 1),
       }));
@@ -87,8 +89,9 @@ export function groupCartByProduct(items: CartItem[]): CartProductGroup[] {
 export function getLineQuantity(
   items: CartItem[],
   productId: string,
-  size: string
+  size: string,
+  color = ""
 ): number {
-  const lineId = createLineId(productId, size);
+  const lineId = createLineId(productId, size, color);
   return items.find((item) => item.lineId === lineId)?.quantity ?? 0;
 }

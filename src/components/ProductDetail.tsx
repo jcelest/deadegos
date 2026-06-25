@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ProductGallery from "@/components/ProductGallery";
 import { useCart } from "@/context/CartContext";
-import { getPrimaryImageUrl } from "@/lib/product-images";
+import {
+  getDisplayImages,
+  getImageForColor,
+  getShopCoverImage,
+} from "@/lib/product-images";
 
 interface ProductDetailProps {
   product: {
@@ -16,27 +20,53 @@ interface ProductDetailProps {
     sizes: string;
     inStock: boolean;
     imageUrls: string;
+    colorImages: string;
   };
   images: string[];
+  colors: string[];
+  colorImages: Record<string, string>;
   sizes: string[];
 }
 
-export default function ProductDetail({ product, images, sizes }: ProductDetailProps) {
+export default function ProductDetail({
+  product,
+  images,
+  colors,
+  colorImages,
+  sizes,
+}: ProductDetailProps) {
   const { addItem, getQuantity } = useCart();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(colors[0] || null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
 
-  const coverImage = getPrimaryImageUrl(product.imageUrls);
-  const inCartQty = selectedSize ? getQuantity(product.id, selectedSize) : 0;
+  const displayImages = useMemo(
+    () => getDisplayImages(images, colorImages, selectedColor),
+    [images, colorImages, selectedColor]
+  );
+
+  const activeImage =
+    (selectedColor ? getImageForColor(colorImages, selectedColor) : undefined) ||
+    displayImages[0] ||
+    getShopCoverImage(product.imageUrls, product.colorImages);
+
+  const inCartQty = selectedSize
+    ? getQuantity(product.id, selectedSize, selectedColor || "")
+    : 0;
 
   useEffect(() => {
     setQuantity(1);
-  }, [selectedSize]);
+  }, [selectedSize, selectedColor]);
 
   const handleAddToCart = () => {
     if (!product.inStock) return;
+
+    if (colors.length > 0 && !selectedColor) {
+      setError("Select a color before adding to cart");
+      return;
+    }
 
     if (!selectedSize) {
       setError("Select a size before adding to cart");
@@ -53,7 +83,8 @@ export default function ProductDetail({ product, images, sizes }: ProductDetailP
       name: product.name,
       price: product.price,
       size: selectedSize,
-      imageUrl: coverImage,
+      color: selectedColor || "",
+      imageUrl: activeImage,
       quantity,
     });
 
@@ -75,7 +106,11 @@ export default function ProductDetail({ product, images, sizes }: ProductDetailP
 
         <div className="grid gap-8 md:grid-cols-2 md:gap-12">
           <div className="listing-fade-item" style={{ animationDelay: "80ms" }}>
-            <ProductGallery images={images} name={product.name} />
+            <ProductGallery
+              key={selectedColor || "default"}
+              images={displayImages}
+              name={product.name}
+            />
           </div>
 
           <div className="flex flex-col justify-center">
@@ -107,11 +142,36 @@ export default function ProductDetail({ product, images, sizes }: ProductDetailP
               {product.description}
             </p>
 
+            {colors.length > 0 && (
+              <div className="listing-fade-item mb-6" style={{ animationDelay: "440ms" }}>
+                <p className="mb-3 text-xs tracking-widest text-white/40">COLOR</p>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => {
+                        setSelectedColor(color);
+                        setError("");
+                      }}
+                      className={`listing-visual-glow listing-size-chip touch-target border px-4 py-2.5 text-sm transition-colors ${
+                        selectedColor === color
+                          ? "border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/15 text-white"
+                          : "border-white/20 text-white/70"
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="listing-fade-item mb-6" style={{ animationDelay: "480ms" }}>
               <p className="mb-3 text-xs tracking-widest text-white/40">SIZES</p>
               <div className="flex flex-wrap gap-2">
                 {sizes.map((size) => {
-                  const sizeInCart = getQuantity(product.id, size);
+                  const sizeInCart = getQuantity(product.id, size, selectedColor || "");
 
                   return (
                     <button
@@ -160,6 +220,7 @@ export default function ProductDetail({ product, images, sizes }: ProductDetailP
               </div>
               {selectedSize && inCartQty > 0 && (
                 <p className="mt-2 text-xs text-white/40">
+                  {selectedColor ? `${selectedColor} / ` : ""}
                   Size {selectedSize} already has {inCartQty} in your cart
                 </p>
               )}

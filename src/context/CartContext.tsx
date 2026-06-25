@@ -25,7 +25,7 @@ interface CartContextValue {
   addItem: (item: Omit<CartItem, "lineId" | "quantity"> & { quantity?: number }) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
-  getQuantity: (productId: string, size: string) => number;
+  getQuantity: (productId: string, size: string, color?: string) => number;
   clearCart: () => void;
 }
 
@@ -46,7 +46,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback(
     (item: Omit<CartItem, "lineId" | "quantity"> & { quantity?: number }) => {
-      const lineId = createLineId(item.productId, item.size);
+      const lineId = createLineId(item.productId, item.size, item.color || "");
       const qty = item.quantity ?? 1;
 
       setItems((prev) => {
@@ -64,6 +64,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             name: item.name,
             price: item.price,
             size: item.size,
+            color: item.color || "",
             imageUrl: item.imageUrl,
             quantity: qty,
           },
@@ -90,7 +91,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => setItems([]), []);
 
   const getQuantity = useCallback(
-    (productId: string, size: string) => getLineQuantity(items, productId, size),
+    (productId: string, size: string, color = "") =>
+      getLineQuantity(items, productId, size, color),
     [items]
   );
 

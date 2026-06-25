@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
-import { parseProductFormData, validateProductInput } from "@/lib/products";
-import { serializeImageUrls } from "@/lib/product-images";
-import { saveUploadedImage } from "@/lib/upload";
+import {
+  normalizeAdminProductData,
+  parseAdminProductPayload,
+  validateProductInput,
+} from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -19,31 +21,16 @@ export async function PUT(
   const { id } = await params;
 
   try {
-    const data = await parseProductFormData(request);
+    const data = await parseAdminProductPayload(request);
     const errors = validateProductInput(data);
 
     if (errors.length > 0) {
       return NextResponse.json({ error: errors.join(", ") }, { status: 400 });
     }
 
-    const uploadedUrls = await Promise.all(
-      data.newImages.map((image) => saveUploadedImage(image))
-    );
-
-    const imageUrls = serializeImageUrls([...data.existingImageUrls, ...uploadedUrls]);
-
     const product = await prisma.product.update({
       where: { id },
-      data: {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        category: data.category,
-        sizes: data.sizes,
-        imageUrls: imageUrls || undefined,
-        featured: data.featured,
-        inStock: data.inStock,
-      },
+      data: normalizeAdminProductData(data),
     });
 
     return NextResponse.json(product);

@@ -15,6 +15,8 @@ interface Product {
   price: number;
   category: string;
   sizes: string;
+  colors: string;
+  colorImages: string;
   imageUrls: string;
   featured: boolean;
   inStock: boolean;

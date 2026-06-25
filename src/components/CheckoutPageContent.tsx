@@ -39,7 +39,9 @@ export default function CheckoutPageContent() {
           items: items.map((item) => ({
             productId: item.productId,
             size: item.size,
+            color: item.color,
             quantity: item.quantity,
+            imageUrl: item.imageUrl,
           })),
           customer: {
             customerName: form.get("customerName"),

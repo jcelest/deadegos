@@ -31,7 +31,7 @@ function orderItemsHtml(items: OrderItem[]): string {
     .map(
       (item) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #222;">${item.name} (${item.size}) × ${item.quantity}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #222;">${item.name}${item.color ? ` (${item.color})` : ""} (${item.size}) × ${item.quantity}</td>
           <td style="padding:8px 0;border-bottom:1px solid #222;text-align:right;">${formatMoney(item.price * item.quantity)}</td>
         </tr>`
     )

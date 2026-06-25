@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getCurrentTheme } from "@/lib/theme";
-import { getPrimaryImageUrl } from "@/lib/product-images";
+import { getShopCoverImage } from "@/lib/product-images";
 
 interface Product {
   id: string;
@@ -12,11 +12,12 @@ interface Product {
   price: number;
   category: string;
   imageUrls: string;
+  colorImages?: string;
   inStock: boolean;
 }
 
 export default function ProductCard({ product }: { product: Product }) {
-  const coverImage = getPrimaryImageUrl(product.imageUrls);
+  const coverImage = getShopCoverImage(product.imageUrls, product.colorImages);
 
   return (
     <Link
