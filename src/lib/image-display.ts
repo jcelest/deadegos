@@ -11,10 +11,28 @@ export function shouldUseNativeImage(src: string): boolean {
 export function preloadImages(urls: string[]): void {
   if (typeof window === "undefined") return;
 
-  for (const url of urls) {
-    if (!url) continue;
-    const img = new window.Image();
-    img.decoding = "async";
-    img.src = url;
-  }
+  const unique = [...new Set(urls.filter(Boolean))];
+  let index = 0;
+  let inFlight = 0;
+  const maxConcurrent = 3;
+
+  const loadNext = () => {
+    while (index < unique.length && inFlight < maxConcurrent) {
+      const url = unique[index++];
+      inFlight += 1;
+
+      const img = new window.Image();
+      const done = () => {
+        inFlight -= 1;
+        loadNext();
+      };
+
+      img.onload = done;
+      img.onerror = done;
+      img.decoding = "async";
+      img.src = url;
+    }
+  };
+
+  loadNext();
 }

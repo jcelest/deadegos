@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ProductGallery from "@/components/ProductGallery";
 import { useCart } from "@/context/CartContext";
-import { preloadImages } from "@/lib/image-display";
 import {
   getDisplayImages,
   getImageForColor,
@@ -65,11 +64,6 @@ export default function ProductDetail({
   useEffect(() => {
     setQuantity(1);
   }, [selectedSize, selectedColor]);
-
-  useEffect(() => {
-    const urls = [...new Set([...images, ...Object.values(colorImages)])];
-    preloadImages(urls);
-  }, [images, colorImages]);
 
   const handleAddToCart = () => {
     if (!product.inStock) return;

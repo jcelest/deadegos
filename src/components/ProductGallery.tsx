@@ -16,12 +16,14 @@ function GalleryImage({
   className,
   priority = false,
   sizes,
+  loading = "eager",
 }: {
   src: string;
   alt: string;
   className: string;
   priority?: boolean;
   sizes?: string;
+  loading?: "eager" | "lazy";
 }) {
   if (shouldUseNativeImage(src)) {
     return (
@@ -29,9 +31,9 @@ function GalleryImage({
       <img
         src={src}
         alt={alt}
-        loading="eager"
+        loading={loading}
         decoding="async"
-        fetchPriority={priority ? "high" : "low"}
+        {...(priority ? { fetchPriority: "high" as const } : {})}
         className={className}
       />
     );
@@ -69,35 +71,19 @@ export default function ProductGallery({ images, name, warmCache = [] }: Product
   if (images.length === 0) return null;
 
   const safeIndex = Math.min(activeIndex, images.length - 1);
+  const activeUrl = images[safeIndex];
 
   return (
     <div className="space-y-4">
-      <div aria-hidden className="pointer-events-none fixed h-0 w-0 overflow-hidden opacity-0">
-        {cacheUrls.map((url) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={`cache-${url}`} src={url} alt="" loading="eager" decoding="async" />
-        ))}
-      </div>
       <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5">
-        {images.map((url, index) => {
-          const isActive = index === safeIndex;
-
-          return (
-            <div
-              key={url}
-              className={`absolute inset-0 ${isActive ? "z-10 visible opacity-100" : "z-0 invisible opacity-0"} relative`}
-              aria-hidden={!isActive}
-            >
-              <GalleryImage
-                src={url}
-                alt={`${name} - image ${index + 1}`}
-                priority={index === 0}
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          );
-        })}
+        <GalleryImage
+          key={activeUrl}
+          src={activeUrl}
+          alt={`${name} - image ${safeIndex + 1}`}
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       </div>
 
       {images.length > 1 && (
@@ -116,7 +102,8 @@ export default function ProductGallery({ images, name, warmCache = [] }: Product
               <GalleryImage
                 src={url}
                 alt={`${name} thumbnail ${index + 1}`}
-                className="h-full w-full object-cover"
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
               />
             </button>
           ))}
