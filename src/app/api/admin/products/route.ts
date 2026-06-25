@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
+import { getNextProductSortOrder } from "@/lib/product-order";
 import {
   normalizeAdminProductData,
   parseAdminProductPayload,
@@ -23,8 +24,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: errors.join(", ") }, { status: 400 });
     }
 
+    const sortOrder = await getNextProductSortOrder();
+
     const product = await prisma.product.create({
-      data: normalizeAdminProductData(data),
+      data: {
+        ...normalizeAdminProductData(data),
+        sortOrder,
+      },
     });
 
     return NextResponse.json(product, { status: 201 });

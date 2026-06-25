@@ -18,6 +18,7 @@ async function main() {
         imageUrls: serializeImageUrls(["/uploads/placeholder-hoodie.jpg"]),
         featured: true,
         inStock: true,
+        sortOrder: 0,
       },
       {
         name: "Have No Enemies Tee",
@@ -29,6 +30,7 @@ async function main() {
         imageUrls: serializeImageUrls(["/uploads/placeholder-tee.jpg"]),
         featured: true,
         inStock: true,
+        sortOrder: 1,
       },
       {
         name: "Blue Season Cap",
@@ -40,6 +42,7 @@ async function main() {
         imageUrls: serializeImageUrls(["/uploads/placeholder-cap.jpg"]),
         featured: false,
         inStock: true,
+        sortOrder: 2,
       },
     ],
   });

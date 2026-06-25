@@ -2,13 +2,14 @@ import CampaignBanner from "@/components/CampaignBanner";
 import MotionBackground from "@/components/MotionBackground";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/prisma";
+import { productListOrderBy } from "@/lib/product-order";
 
 export const dynamic = "force-dynamic";
 
 async function getProducts() {
   try {
     return await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: productListOrderBy,
     });
   } catch {
     return [];

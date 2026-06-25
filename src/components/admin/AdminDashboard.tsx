@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
 import AdminLogin from "@/components/admin/AdminLogin";
 import AdminOrders from "@/components/admin/AdminOrders";
+import ListingsOrder from "@/components/admin/ListingsOrder";
 import ProductForm from "@/components/admin/ProductForm";
 import BrandLogo from "@/components/BrandLogo";
-import { getPrimaryImageUrl, parseImageUrls } from "@/lib/product-images";
 
 interface Product {
   id: string;
@@ -166,63 +165,15 @@ export default function AdminDashboard() {
             ALL LISTINGS ({products.length})
           </h2>
 
-          {products.length === 0 ? (
-            <p className="py-12 text-center text-sm text-white/40">
-              No listings yet. Create your first product above.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {products.map((product) => {
-                const imageCount = parseImageUrls(product.imageUrls).length;
-
-                return (
-                <div
-                  key={product.id}
-                  className="flex flex-col gap-4 border border-white/10 bg-black/40 p-4 sm:flex-row sm:items-center"
-                >
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-white/10">
-                    <Image
-                      src={getPrimaryImageUrl(product.imageUrls)}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-white">{product.name}</p>
-                    <p className="text-sm text-white/50">
-                      ${product.price.toFixed(2)} &middot; {product.category}
-                      <span className="ml-2 text-white/40">{imageCount} image{imageCount !== 1 ? "s" : ""}</span>
-                      {product.featured && (
-                        <span className="ml-2 text-[var(--color-de-primary)]">Featured</span>
-                      )}
-                      {!product.inStock && (
-                        <span className="ml-2 text-red-400">Sold Out</span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 gap-2 self-start sm:self-auto">
-                    <button
-                      onClick={() => {
-                        setEditing(product);
-                        setShowForm(true);
-                      }}
-                      className="border border-white/20 px-3 py-1 text-xs tracking-widest text-white/60 hover:text-white"
-                    >
-                      EDIT
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      className="border border-red-400/30 px-3 py-1 text-xs tracking-widest text-red-400/70 hover:text-red-400"
-                    >
-                      DELETE
-                    </button>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          )}
+          <ListingsOrder
+            products={products}
+            onEdit={(product) => {
+              setEditing(product);
+              setShowForm(true);
+            }}
+            onDelete={handleDelete}
+            onReorder={setProducts}
+          />
         </div>
         </>
         )}

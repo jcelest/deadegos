@@ -4,6 +4,7 @@ import HeroSeasonBadges from "@/components/HeroSeasonBadges";
 import MotionBackground from "@/components/MotionBackground";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/prisma";
+import { productListOrderBy } from "@/lib/product-order";
 export const dynamic = "force-dynamic";
 
 async function getFeaturedProducts() {
@@ -11,7 +12,7 @@ async function getFeaturedProducts() {
     return await prisma.product.findMany({
       where: { featured: true },
       take: 3,
-      orderBy: { createdAt: "desc" },
+      orderBy: productListOrderBy,
     });
   } catch {
     return [];

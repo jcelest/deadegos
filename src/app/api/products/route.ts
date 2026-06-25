@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getNextProductSortOrder, productListOrderBy } from "@/lib/product-order";
 import { prisma } from "@/lib/prisma";
 import { serializeImageUrls } from "@/lib/product-images";
 
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: productListOrderBy,
     });
     return NextResponse.json(products);
   } catch {
@@ -24,6 +25,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const sortOrder = await getNextProductSortOrder();
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -34,6 +37,7 @@ export async function POST(request: NextRequest) {
         imageUrls: serializeImageUrls(urls),
         featured: featured ?? false,
         inStock: inStock ?? true,
+        sortOrder,
       },
     });
 
