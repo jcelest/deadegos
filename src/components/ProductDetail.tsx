@@ -5,8 +5,8 @@ import Link from "next/link";
 import ProductGallery from "@/components/ProductGallery";
 import { useCart } from "@/context/CartContext";
 import {
+  getCoverImage,
   getDisplayImages,
-  getImageForColor,
   getShopCoverImage,
 } from "@/lib/product-images";
 
@@ -53,8 +53,7 @@ export default function ProductDetail({
   );
 
   const activeImage =
-    (selectedColor ? getImageForColor(colorImages, selectedColor) : undefined) ||
-    displayImages[0] ||
+    getCoverImage(images, colorImages, selectedColor) ||
     getShopCoverImage(product.imageUrls, product.colorImages);
 
   const inCartQty = selectedSize

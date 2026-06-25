@@ -89,19 +89,34 @@ export function getImageForColor(
   return colorImages[color];
 }
 
+function dedupeUrls(urls: string[]): string[] {
+  return [...new Set(urls.filter(Boolean))];
+}
+
+export function getCoverImage(
+  galleryImages: string[],
+  colorImages: Record<string, string>,
+  selectedColor: string | null
+): string {
+  if (selectedColor) {
+    return getImageForColor(colorImages, selectedColor) || galleryImages[0] || "";
+  }
+
+  return galleryImages[0] || Object.values(colorImages)[0] || "";
+}
+
 export function getDisplayImages(
   galleryImages: string[],
   colorImages: Record<string, string>,
   selectedColor: string | null
 ): string[] {
-  const colorImage = selectedColor ? getImageForColor(colorImages, selectedColor) : undefined;
+  const cover = getCoverImage(galleryImages, colorImages, selectedColor);
+  if (!cover) return dedupeUrls(galleryImages);
 
-  if (!colorImage) {
-    return galleryImages;
-  }
+  const colorImageUrls = new Set(Object.values(colorImages));
+  const additional = galleryImages.filter((url) => url !== cover && !colorImageUrls.has(url));
 
-  const rest = galleryImages.filter((url) => url !== colorImage);
-  return [colorImage, ...rest];
+  return dedupeUrls([cover, ...additional]);
 }
 
 export function getPrimaryImageUrl(

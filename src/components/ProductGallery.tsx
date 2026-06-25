@@ -90,7 +90,7 @@ export default function ProductGallery({ images, name, warmCache = [] }: Product
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-3">
           {images.map((url, index) => (
             <button
-              key={`${url}-${index}`}
+              key={index}
               type="button"
               onClick={() => setActiveIndex(index)}
               className={`relative aspect-square overflow-hidden border transition-[border-color,box-shadow] duration-150 ${
