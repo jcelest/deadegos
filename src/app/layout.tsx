@@ -2,6 +2,7 @@ import { Inter, Michroma } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import StripDevBrowserAttrs from "@/components/StripDevBrowserAttrs";
 import ThemeVariables from "@/components/ThemeVariables";
 import Providers from "@/components/Providers";
@@ -47,6 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${michroma.variable}`} suppressHydrationWarning>
       <head>
+        <GoogleAnalytics />
         <StripDevBrowserAttrs />
         <ThemeVariables />
       </head>
