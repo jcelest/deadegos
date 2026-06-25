@@ -3,6 +3,10 @@ import { getCurrentTheme } from "@/lib/theme";
 
 export const MAX_PRODUCT_IMAGES = 8;
 
+function dedupeUrls(urls: string[]): string[] {
+  return [...new Set(urls.filter(Boolean))];
+}
+
 function normalizeImageUrl(url: string): string {
   if (url.startsWith("/api/media/") || url.startsWith("/uploads/")) {
     return url;
@@ -32,7 +36,7 @@ export function parseImageUrls(value: string | null | undefined): string[] {
 }
 
 export function serializeImageUrls(urls: string[]): string {
-  const unique = urls.filter((url, index) => urls.indexOf(url) === index);
+  const unique = dedupeUrls(urls);
   return JSON.stringify(unique.slice(0, MAX_PRODUCT_IMAGES));
 }
 
@@ -89,8 +93,12 @@ export function getImageForColor(
   return colorImages[color];
 }
 
-function dedupeUrls(urls: string[]): string[] {
-  return [...new Set(urls.filter(Boolean))];
+export function stripColorImagesFromGallery(
+  galleryImages: string[],
+  colorImages: Record<string, string>
+): string[] {
+  const colorImageUrls = new Set(Object.values(colorImages));
+  return dedupeUrls(galleryImages.filter((url) => !colorImageUrls.has(url)));
 }
 
 export function getCoverImage(
@@ -105,18 +113,20 @@ export function getCoverImage(
   return galleryImages[0] || Object.values(colorImages)[0] || "";
 }
 
-export function getDisplayImages(
+export function getGalleryImages(
   galleryImages: string[],
   colorImages: Record<string, string>,
-  selectedColor: string | null
+  colors: string[]
 ): string[] {
-  const cover = getCoverImage(galleryImages, colorImages, selectedColor);
-  if (!cover) return dedupeUrls(galleryImages);
+  if (colors.length > 0) {
+    return dedupeUrls(
+      colors
+        .map((color) => colorImages[color])
+        .filter((url): url is string => Boolean(url))
+    );
+  }
 
-  const colorImageUrls = new Set(Object.values(colorImages));
-  const additional = galleryImages.filter((url) => url !== cover && !colorImageUrls.has(url));
-
-  return dedupeUrls([cover, ...additional]);
+  return dedupeUrls(galleryImages);
 }
 
 export function getPrimaryImageUrl(
@@ -127,7 +137,11 @@ export function getPrimaryImageUrl(
   const colorImages = parseColorImages(colorImagesValue);
   const firstColorImage = Object.values(colorImages)[0];
 
-  return gallery[0] || firstColorImage || getCurrentTheme().logo;
+  if (firstColorImage) {
+    return firstColorImage;
+  }
+
+  return gallery[0] || getCurrentTheme().logo;
 }
 
 export function getShopCoverImage(

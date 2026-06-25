@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Image from "next/image";
 import { preloadImages, shouldUseNativeImage } from "@/lib/image-display";
 
@@ -8,6 +8,8 @@ interface ProductGalleryProps {
   images: string[];
   name: string;
   warmCache?: string[];
+  activeIndex: number;
+  onActiveIndexChange: (index: number) => void;
 }
 
 function GalleryImage({
@@ -52,17 +54,17 @@ function GalleryImage({
   );
 }
 
-export default function ProductGallery({ images, name, warmCache = [] }: ProductGalleryProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const imagesKey = useMemo(() => images.join("|"), [images]);
+export default function ProductGallery({
+  images,
+  name,
+  warmCache = [],
+  activeIndex,
+  onActiveIndexChange,
+}: ProductGalleryProps) {
   const cacheUrls = useMemo(
     () => [...new Set([...images, ...warmCache].filter(Boolean))],
     [images, warmCache]
   );
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [imagesKey]);
 
   useEffect(() => {
     preloadImages(cacheUrls);
@@ -70,7 +72,7 @@ export default function ProductGallery({ images, name, warmCache = [] }: Product
 
   if (images.length === 0) return null;
 
-  const safeIndex = Math.min(activeIndex, images.length - 1);
+  const safeIndex = Math.min(Math.max(activeIndex, 0), images.length - 1);
   const activeUrl = images[safeIndex];
 
   return (
@@ -86,29 +88,27 @@ export default function ProductGallery({ images, name, warmCache = [] }: Product
         />
       </div>
 
-      {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-3">
-          {images.map((url, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => setActiveIndex(index)}
-              className={`relative aspect-square overflow-hidden border transition-[border-color,box-shadow] duration-150 ${
-                index === safeIndex
-                  ? "border-[var(--color-de-primary)]/70"
-                  : "border-white/10"
-              }`}
-            >
-              <GalleryImage
-                src={url}
-                alt={`${name} thumbnail ${index + 1}`}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-3">
+        {images.map((url, index) => (
+          <button
+            key={`${url}-${index}`}
+            type="button"
+            onClick={() => onActiveIndexChange(index)}
+            className={`relative aspect-square overflow-hidden border transition-[border-color,box-shadow] duration-150 ${
+              index === safeIndex
+                ? "border-[var(--color-de-primary)]/70"
+                : "border-white/10"
+            }`}
+          >
+            <GalleryImage
+              src={url}
+              alt={`${name} thumbnail ${index + 1}`}
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

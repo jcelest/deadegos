@@ -6,7 +6,7 @@ import ProductGallery from "@/components/ProductGallery";
 import { useCart } from "@/context/CartContext";
 import {
   getCoverImage,
-  getDisplayImages,
+  getGalleryImages,
   getShopCoverImage,
 } from "@/lib/product-images";
 
@@ -38,18 +38,19 @@ export default function ProductDetail({
   const { addItem, getQuantity } = useCart();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(colors[0] || null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
 
-  const allGalleryImages = useMemo(
-    () => [...new Set([...images, ...Object.values(colorImages)])],
-    [images, colorImages]
+  const galleryImages = useMemo(
+    () => getGalleryImages(images, colorImages, colors),
+    [images, colorImages, colors]
   );
 
-  const displayImages = useMemo(
-    () => getDisplayImages(images, colorImages, selectedColor),
-    [images, colorImages, selectedColor]
+  const warmCache = useMemo(
+    () => [...new Set([...galleryImages, ...Object.values(colorImages)])],
+    [galleryImages, colorImages]
   );
 
   const activeImage =
@@ -63,6 +64,24 @@ export default function ProductDetail({
   useEffect(() => {
     setQuantity(1);
   }, [selectedSize, selectedColor]);
+
+  useEffect(() => {
+    if (colors.length > 0 && selectedColor) {
+      const index = colors.indexOf(selectedColor);
+      if (index >= 0) setGalleryIndex(index);
+      return;
+    }
+
+    setGalleryIndex(0);
+  }, [selectedColor, colors]);
+
+  const handleGalleryIndexChange = (index: number) => {
+    setGalleryIndex(index);
+    if (colors[index]) {
+      setSelectedColor(colors[index]);
+      setError("");
+    }
+  };
 
   const handleAddToCart = () => {
     if (!product.inStock) return;
@@ -111,8 +130,10 @@ export default function ProductDetail({
         <div className="grid gap-8 md:grid-cols-2 md:gap-12">
           <div className="listing-fade-item" style={{ animationDelay: "80ms" }}>
             <ProductGallery
-              images={displayImages}
-              warmCache={allGalleryImages}
+              images={galleryImages}
+              warmCache={warmCache}
+              activeIndex={galleryIndex}
+              onActiveIndexChange={handleGalleryIndexChange}
               name={product.name}
             />
           </div>

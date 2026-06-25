@@ -8,6 +8,7 @@ import {
   parseColorImages,
   parseColors,
   parseImageUrls,
+  stripColorImagesFromGallery,
 } from "@/lib/product-images";
 
 interface Product {
@@ -202,7 +203,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         colors: colorsInput,
         featured,
         inStock,
-        imageUrls: [...existingImages, ...uploadedGallery],
+        imageUrls: stripColorImagesFromGallery(
+          [...existingImages, ...uploadedGallery],
+          finalColorImages
+        ),
         colorImages: Object.fromEntries(
           parsedColors.map((color) => [color, finalColorImages[color]])
         ),
@@ -408,8 +412,8 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               className="w-full text-sm text-white/60 file:mr-4 file:border file:border-white/20 file:bg-black file:px-4 file:py-2 file:text-sm file:text-white disabled:opacity-40"
             />
             <p className="mt-2 text-xs text-white/40">
-              Optional extra angles. First gallery image is the default cover when no color is
-              selected.
+              Optional extra angles for listings without colors. When colors are set, each color
+              image is the cover — do not re-upload those here.
             </p>
           </div>
 
