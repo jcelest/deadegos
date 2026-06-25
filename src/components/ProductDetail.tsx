@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ProductGallery from "@/components/ProductGallery";
 import { useCart } from "@/context/CartContext";
+import { preloadImages } from "@/lib/image-display";
 import {
   getDisplayImages,
   getImageForColor,
@@ -42,6 +43,11 @@ export default function ProductDetail({
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
 
+  const allGalleryImages = useMemo(
+    () => [...new Set([...images, ...Object.values(colorImages)])],
+    [images, colorImages]
+  );
+
   const displayImages = useMemo(
     () => getDisplayImages(images, colorImages, selectedColor),
     [images, colorImages, selectedColor]
@@ -59,6 +65,11 @@ export default function ProductDetail({
   useEffect(() => {
     setQuantity(1);
   }, [selectedSize, selectedColor]);
+
+  useEffect(() => {
+    const urls = [...new Set([...images, ...Object.values(colorImages)])];
+    preloadImages(urls);
+  }, [images, colorImages]);
 
   const handleAddToCart = () => {
     if (!product.inStock) return;
@@ -107,8 +118,8 @@ export default function ProductDetail({
         <div className="grid gap-8 md:grid-cols-2 md:gap-12">
           <div className="listing-fade-item" style={{ animationDelay: "80ms" }}>
             <ProductGallery
-              key={selectedColor || "default"}
               images={displayImages}
+              warmCache={allGalleryImages}
               name={product.name}
             />
           </div>

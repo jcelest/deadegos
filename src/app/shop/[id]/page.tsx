@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import ProductDetail from "@/components/ProductDetail";
+import ProductImagePreload from "@/components/ProductImagePreload";
 import { parseColorImages, parseColors, parseImageUrls } from "@/lib/product-images";
 import { prisma } from "@/lib/prisma";
 
@@ -27,24 +28,28 @@ export default async function ProductPage({
   const colors = parseColors(product.colors);
   const colorImages = parseColorImages(product.colorImages);
   const images = parseImageUrls(product.imageUrls);
+  const preloadUrls = [...images, ...Object.values(colorImages)];
 
   return (
-    <ProductDetail
-      product={{
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        sizes: product.sizes,
-        inStock: product.inStock,
-        imageUrls: product.imageUrls,
-        colorImages: product.colorImages,
-      }}
-      images={images}
-      colors={colors}
-      colorImages={colorImages}
-      sizes={sizes}
-    />
+    <>
+      <ProductImagePreload urls={preloadUrls} />
+      <ProductDetail
+        product={{
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          category: product.category,
+          sizes: product.sizes,
+          inStock: product.inStock,
+          imageUrls: product.imageUrls,
+          colorImages: product.colorImages,
+        }}
+        images={images}
+        colors={colors}
+        colorImages={colorImages}
+        sizes={sizes}
+      />
+    </>
   );
 }

@@ -4,6 +4,11 @@ import { getBlobAuthOptions } from "@/lib/blob-access";
 
 export const runtime = "nodejs";
 
+const CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=31536000, immutable",
+  "CDN-Cache-Control": "public, max-age=31536000, immutable",
+};
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -19,6 +24,7 @@ export async function GET(
     const auth = await getBlobAuthOptions();
     const result = await get(pathname, {
       access: "private",
+      useCache: true,
       ...auth,
     });
 
@@ -26,10 +32,13 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return new NextResponse(result.stream, {
+    const buffer = Buffer.from(await new Response(result.stream).arrayBuffer());
+
+    return new NextResponse(buffer, {
       headers: {
+        ...CACHE_HEADERS,
         "Content-Type": result.blob.contentType || "application/octet-stream",
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Length": String(buffer.byteLength),
       },
     });
   } catch (error) {
