@@ -23,6 +23,18 @@ interface Orb {
   pulseSpeed: number;
 }
 
+interface Star {
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+  twinkleSpeed: number;
+  phase: number;
+  opacity: number;
+  driftX: number;
+  driftY: number;
+}
+
 function hexToRgb(hex: string) {
   const normalized = hex.replace("#", "");
   return {
@@ -32,9 +44,34 @@ function hexToRgb(hex: string) {
   };
 }
 
+function drawStarPath(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  outerRadius: number,
+  innerRadius: number,
+  rotation: number
+) {
+  const points = 5;
+  ctx.beginPath();
+
+  for (let i = 0; i < points * 2; i += 1) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = rotation + (Math.PI / points) * i - Math.PI / 2;
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+
+  ctx.closePath();
+}
+
 export default function MotionBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const theme = getCurrentTheme();
+  const isUsaTheme = theme.id === "blue";
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,6 +102,7 @@ export default function MotionBackground() {
     ];
 
     const orbs: Orb[] = [];
+    const stars: Star[] = [];
 
     const resize = () => {
       const rect = canvas.parentElement?.getBoundingClientRect();
@@ -76,7 +114,7 @@ export default function MotionBackground() {
       width = nextWidth;
       height = nextHeight;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 2);
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       canvas.style.width = `${width}px`;
@@ -97,6 +135,195 @@ export default function MotionBackground() {
           pulse: Math.random() * Math.PI * 2,
           pulseSpeed: Math.random() * 0.02 + 0.01,
         });
+      }
+    };
+
+    const initStars = () => {
+      stars.length = 0;
+
+      const cantonW = width * (isMobile ? 0.52 : 0.46);
+      const cantonH = height * (isMobile ? 0.34 : 0.38);
+      const gridCols = isMobile ? 5 : 6;
+      const gridRows = isMobile ? 4 : 5;
+      const cellW = cantonW / gridCols;
+      const cellH = cantonH / gridRows;
+
+      for (let row = 0; row < gridRows; row += 1) {
+        for (let col = 0; col < gridCols; col += 1) {
+          const offsetX = row % 2 === 0 ? 0 : cellW * 0.5;
+          stars.push({
+            x: col * cellW + cellW * 0.5 + offsetX + (Math.random() - 0.5) * cellW * 0.15,
+            y: row * cellH + cellH * 0.5 + (Math.random() - 0.5) * cellH * 0.15,
+            size: isMobile ? 4 + Math.random() * 3 : 5.5 + Math.random() * 4,
+            rotation: Math.random() * Math.PI * 2,
+            twinkleSpeed: 0.018 + Math.random() * 0.025,
+            phase: Math.random() * Math.PI * 2,
+            opacity: 0.75 + Math.random() * 0.25,
+            driftX: (Math.random() - 0.5) * 0.08,
+            driftY: (Math.random() - 0.5) * 0.06,
+          });
+        }
+      }
+
+      const scatterCount = isMobile ? 14 : 24;
+      for (let i = 0; i < scatterCount; i += 1) {
+        stars.push({
+          x: cantonW * 0.45 + Math.random() * (width - cantonW * 0.35),
+          y: Math.random() * height,
+          size: 2.5 + Math.random() * 3.5,
+          rotation: Math.random() * Math.PI * 2,
+          twinkleSpeed: 0.014 + Math.random() * 0.02,
+          phase: Math.random() * Math.PI * 2,
+          opacity: 0.35 + Math.random() * 0.4,
+          driftX: (Math.random() - 0.5) * 0.1,
+          driftY: (Math.random() - 0.5) * 0.08,
+        });
+      }
+    };
+
+    const drawBlueTint = () => {
+      const vignette = ctx.createRadialGradient(
+        width / 2,
+        height * 0.42,
+        0,
+        width / 2,
+        height * 0.42,
+        Math.max(width, height) * 0.9
+      );
+      vignette.addColorStop(0, `rgba(${navy.r}, ${navy.g}, ${navy.b}, 0.28)`);
+      vignette.addColorStop(0.55, `rgba(${navy.r}, ${navy.g}, ${navy.b}, 0.16)`);
+      vignette.addColorStop(1, "rgba(0, 0, 0, 0.35)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+
+      const centerGlow = ctx.createRadialGradient(
+        width / 2,
+        height * 0.38,
+        0,
+        width / 2,
+        height * 0.38,
+        isMobile ? 260 : 380
+      );
+      centerGlow.addColorStop(0, `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.22)`);
+      centerGlow.addColorStop(1, `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0)`);
+      ctx.fillStyle = centerGlow;
+      ctx.fillRect(0, 0, width, height);
+    };
+
+    const drawUsaStripes = (t: number) => {
+      const stripeCount = isMobile ? 11 : 13;
+      const stripeHeight = height / stripeCount;
+      const scroll = prefersReducedMotion ? 0 : Math.sin(t * 0.012) * stripeHeight * 0.65;
+
+      for (let i = 0; i < stripeCount + 2; i += 1) {
+        const y = i * stripeHeight + scroll;
+        const isFilled = i % 2 === 0;
+        const wave = Math.sin(t * 0.016 + i * 0.85) * (isMobile ? 5 : 9);
+        const pulse = Math.sin(t * 0.01 + i * 0.4) * 0.04;
+        const opacity = isFilled ? 0.28 + pulse : 0.08;
+
+        ctx.fillStyle = isFilled
+          ? `rgba(${primary.r}, ${primary.g}, ${primary.b}, ${opacity})`
+          : `rgba(255, 255, 255, ${opacity})`;
+        ctx.fillRect(-30, y + wave, width + 60, stripeHeight + 2);
+      }
+
+      ctx.globalAlpha = 0.35;
+      for (let i = 0; i < stripeCount + 2; i += 1) {
+        const y = i * stripeHeight - scroll * 0.5 + stripeHeight * 0.5;
+        const isFilled = i % 2 !== 0;
+        if (!isFilled) continue;
+
+        const wave = Math.sin(t * 0.014 + i * 1.1) * (isMobile ? 4 : 7);
+        ctx.fillStyle = `rgba(${glow.r}, ${glow.g}, ${glow.b}, 0.18)`;
+        ctx.fillRect(-30, y + wave, width + 60, stripeHeight * 0.55);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    const drawUsaCanton = (t: number) => {
+      const cantonW = width * (isMobile ? 0.58 : 0.5);
+      const cantonH = height * (isMobile ? 0.4 : 0.44);
+      const pulse = prefersReducedMotion ? 0 : Math.sin(t * 0.008) * 0.04;
+
+      const cantonGradient = ctx.createLinearGradient(0, 0, cantonW, cantonH);
+      cantonGradient.addColorStop(0, `rgba(${navy.r}, ${navy.g}, ${navy.b}, ${0.94 + pulse})`);
+      cantonGradient.addColorStop(0.65, `rgba(${primary.r}, ${primary.g}, ${primary.b}, ${0.55 + pulse})`);
+      cantonGradient.addColorStop(1, `rgba(${primary.r}, ${primary.g}, ${primary.b}, ${0.35 + pulse})`);
+
+      ctx.fillStyle = cantonGradient;
+      ctx.fillRect(0, 0, cantonW, cantonH);
+
+      ctx.strokeStyle = `rgba(${glow.r}, ${glow.g}, ${glow.b}, ${isMobile ? 0.35 : 0.5})`;
+      ctx.lineWidth = isMobile ? 1.5 : 2;
+      ctx.strokeRect(1, 1, cantonW - 2, cantonH - 2);
+
+      if (!prefersReducedMotion) {
+        const sweepX = (Math.sin(t * 0.006) * 0.5 + 0.5) * cantonW;
+        const sweep = ctx.createLinearGradient(sweepX - cantonW * 0.25, 0, sweepX + cantonW * 0.25, cantonH);
+        sweep.addColorStop(0, "rgba(255, 255, 255, 0)");
+        sweep.addColorStop(0.5, "rgba(255, 255, 255, 0.12)");
+        sweep.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.fillStyle = sweep;
+        ctx.fillRect(0, 0, cantonW, cantonH);
+      }
+    };
+
+    const drawUsaStars = (t: number) => {
+      stars.forEach((star) => {
+        if (!prefersReducedMotion) {
+          star.x += star.driftX;
+          star.y += star.driftY;
+          star.rotation += 0.0015;
+
+          if (star.x < -30) star.x = width + 30;
+          if (star.x > width + 30) star.x = -30;
+          if (star.y < -30) star.y = height + 30;
+          if (star.y > height + 30) star.y = -30;
+        }
+
+        const twinkle = 0.65 + Math.sin(t * star.twinkleSpeed + star.phase) * 0.35;
+        const alpha = Math.min(1, star.opacity * twinkle);
+
+        if (!isMobile) {
+          ctx.shadowColor = `rgba(${glow.r}, ${glow.g}, ${glow.b}, 0.9)`;
+          ctx.shadowBlur = star.size * 2.2;
+        }
+
+        drawStarPath(ctx, star.x, star.y, star.size * 1.15, star.size * 0.48, star.rotation);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.95})`;
+        ctx.fill();
+
+        drawStarPath(ctx, star.x, star.y, star.size, star.size * 0.42, star.rotation);
+        ctx.fillStyle = `rgba(${glow.r}, ${glow.g}, ${glow.b}, ${alpha})`;
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+      });
+    };
+
+    const drawUsaWaveAccents = (t: number) => {
+      const step = isMobile ? 5 : 3;
+      const waveCount = isMobile ? 2 : 3;
+
+      for (let w = 0; w < waveCount; w += 1) {
+        const baseY = height * (0.55 + w * 0.12);
+        const amplitude = isMobile ? 28 + w * 10 : 42 + w * 14;
+
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += step) {
+          const y =
+            baseY +
+            Math.sin(x * 0.004 + t * (0.02 + w * 0.004) + w) * amplitude +
+            Math.sin(x * 0.009 - t * 0.015) * (amplitude * 0.35);
+
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+
+        ctx.strokeStyle = `rgba(${glow.r}, ${glow.g}, ${glow.b}, ${0.35 - w * 0.06})`;
+        ctx.lineWidth = isMobile ? 2 : 2.5;
+        ctx.stroke();
       }
     };
 
@@ -181,48 +408,43 @@ export default function MotionBackground() {
       }
     };
 
+    const drawUsaFrame = (t: number) => {
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, width, height);
+
+      drawUsaStripes(t);
+      drawUsaWaveAccents(t);
+      drawUsaCanton(t);
+      drawUsaStars(t);
+      drawBlueTint();
+    };
+
+    const drawClassicFrame = (t: number) => {
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, width, height);
+
+      drawBlueTint();
+      drawOrbs();
+      waves.forEach((wave) => drawWave(wave, t));
+      drawVerticalStreaks(t);
+      drawScanlines();
+    };
+
     const animate = () => {
-      if (!visible || prefersReducedMotion) {
+      if (!visible) {
         animationId = requestAnimationFrame(animate);
         return;
       }
 
-      time += 1;
+      if (!prefersReducedMotion) {
+        time += 1;
+      }
 
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, width, height);
-
-      const vignette = ctx.createRadialGradient(
-        width / 2,
-        height * 0.4,
-        0,
-        width / 2,
-        height * 0.4,
-        Math.max(width, height) * 0.8
-      );
-      vignette.addColorStop(0, `rgba(${navy.r}, ${navy.g}, ${navy.b}, 0.55)`);
-      vignette.addColorStop(0.5, `rgba(${navy.r}, ${navy.g}, ${navy.b}, 0.3)`);
-      vignette.addColorStop(1, "rgba(0, 0, 0, 0)");
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, width, height);
-
-      drawOrbs();
-      waves.forEach((wave) => drawWave(wave, time));
-      drawVerticalStreaks(time);
-      drawScanlines();
-
-      const centerGlow = ctx.createRadialGradient(
-        width / 2,
-        height * 0.38,
-        0,
-        width / 2,
-        height * 0.38,
-        300
-      );
-      centerGlow.addColorStop(0, `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0.16)`);
-      centerGlow.addColorStop(1, `rgba(${primary.r}, ${primary.g}, ${primary.b}, 0)`);
-      ctx.fillStyle = centerGlow;
-      ctx.fillRect(0, 0, width, height);
+      if (isUsaTheme) {
+        drawUsaFrame(time);
+      } else {
+        drawClassicFrame(time);
+      }
 
       animationId = requestAnimationFrame(animate);
     };
@@ -231,12 +453,14 @@ export default function MotionBackground() {
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
         resize();
-        initOrbs();
+        if (isUsaTheme) initStars();
+        else initOrbs();
       }, 200);
     };
 
     resize();
-    initOrbs();
+    if (isUsaTheme) initStars();
+    else initOrbs();
     animate();
 
     const observer = new ResizeObserver(scheduleResize);
@@ -256,7 +480,7 @@ export default function MotionBackground() {
       observer.disconnect();
       visibilityObserver.disconnect();
     };
-  }, [theme.primary, theme.primaryGlow, theme.navy]);
+  }, [isUsaTheme, theme.primary, theme.primaryGlow, theme.navy]);
 
   return (
     <canvas
