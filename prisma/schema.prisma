@@ -69,3 +69,11 @@ model OrderItem {
   quantity  Int
   imageUrl  String
 }
+
+model SiteSettings {
+  id                    String   @id @default("default")
+  freeShippingThreshold Float    @default(100)
+  defaultMethodId       String   @default("standard")
+  ratesJson             String   @default("[]")
+  updatedAt             DateTime @updatedAt
+}

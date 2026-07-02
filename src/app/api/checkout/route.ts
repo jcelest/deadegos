@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { validateCheckoutItems, CheckoutCustomerInput, CheckoutLineInput } from "@/lib/checkout";
-import { getShippingRate } from "@/lib/shipping";
+import { getShippingRate, getShippingSettings } from "@/lib/shipping";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { getSiteUrl } from "@/lib/site-url";
 import { prisma } from "@/lib/prisma";
@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Please enter your full shipping address" }, { status: 400 });
     }
 
-    if (!getShippingRate(shippingMethod)) {
+    const shippingSettings = await getShippingSettings();
+    const selectedRate = getShippingRate(shippingMethod, shippingSettings);
+
+    if (!selectedRate || !selectedRate.enabled) {
       return NextResponse.json({ error: "Invalid shipping method" }, { status: 400 });
     }
 
@@ -111,7 +114,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (shippingCost > 0) {
-      const rate = getShippingRate(shippingMethod)!;
+      const rate = getShippingRate(shippingMethod, shippingSettings)!;
       lineItems.push({
         price_data: {
           currency: "usd",

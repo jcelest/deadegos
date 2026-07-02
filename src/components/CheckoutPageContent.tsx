@@ -1,33 +1,91 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { groupCartByProduct } from "@/lib/cart";
 import {
-  FREE_SHIPPING_THRESHOLD,
-  SHIPPING_RATES,
+  ShippingRate,
+  ShippingSettings,
   calculateShippingCost,
   formatShippingPrice,
 } from "@/lib/shipping";
+
+type CheckoutShippingSettings = Pick<
+  ShippingSettings,
+  "freeShippingThreshold" | "defaultMethodId"
+> & {
+  rates: ShippingRate[];
+};
 
 export default function CheckoutPageContent() {
   const { items, total } = useCart();
   const groupedItems = useMemo(() => groupCartByProduct(items), [items]);
 
-  const [shippingMethod, setShippingMethod] = useState(SHIPPING_RATES[0].id);
+  const [shippingSettings, setShippingSettings] = useState<CheckoutShippingSettings | null>(null);
+  const [shippingMethod, setShippingMethod] = useState("");
   const [smsOptIn, setSmsOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const shippingCost = calculateShippingCost(total, shippingMethod);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadShippingSettings() {
+      try {
+        const res = await fetch("/api/shipping");
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load shipping options");
+        }
+
+        if (cancelled) return;
+
+        setShippingSettings(data);
+        setShippingMethod(data.defaultMethodId || data.rates[0]?.id || "");
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load shipping options");
+        }
+      } finally {
+        if (!cancelled) setSettingsLoading(false);
+      }
+    }
+
+    loadShippingSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeSettings: ShippingSettings | null = shippingSettings
+    ? {
+        freeShippingThreshold: shippingSettings.freeShippingThreshold,
+        defaultMethodId: shippingSettings.defaultMethodId,
+        rates: shippingSettings.rates,
+      }
+    : null;
+
+  const shippingCost =
+    activeSettings && shippingMethod
+      ? calculateShippingCost(total, shippingMethod, activeSettings)
+      : 0;
   const orderTotal = total + shippingCost;
-  const qualifiesForFreeShipping = total >= FREE_SHIPPING_THRESHOLD;
+  const qualifiesForFreeShipping =
+    activeSettings ? total >= activeSettings.freeShippingThreshold : false;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    if (!shippingMethod) {
+      setError("Select a shipping method");
+      return;
+    }
+
     setLoading(true);
 
     const form = new FormData(event.currentTarget);
@@ -182,12 +240,16 @@ export default function CheckoutPageContent() {
 
           <section className="space-y-3">
             <h2 className="text-xs tracking-widest text-white/60">SHIPPING METHOD</h2>
-            {qualifiesForFreeShipping && (
+            {settingsLoading && (
+              <p className="text-sm text-white/40">Loading shipping options...</p>
+            )}
+            {!settingsLoading && activeSettings && qualifiesForFreeShipping && (
               <p className="text-xs text-[var(--color-de-primary)]">
-                Free shipping unlocked on orders over ${FREE_SHIPPING_THRESHOLD}!
+                Free shipping unlocked on orders over ${activeSettings.freeShippingThreshold}!
               </p>
             )}
-            {SHIPPING_RATES.map((rate) => (
+            {!settingsLoading &&
+              activeSettings?.rates.map((rate) => (
               <label
                 key={rate.id}
                 className={`flex cursor-pointer items-center justify-between border p-4 transition-colors ${
@@ -212,7 +274,7 @@ export default function CheckoutPageContent() {
                   </div>
                 </div>
                 <span className="text-sm text-white">
-                  {formatShippingPrice(rate, total)}
+                  {activeSettings ? formatShippingPrice(rate, total, activeSettings) : "--"}
                 </span>
               </label>
             ))}
@@ -226,7 +288,7 @@ export default function CheckoutPageContent() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || settingsLoading || !shippingMethod}
             className="glow-border w-full border border-[var(--color-de-primary)] bg-[var(--color-de-primary)]/10 py-4 text-sm tracking-widest text-white transition-all hover:bg-[var(--color-de-primary)]/25 disabled:opacity-50"
           >
             {loading ? "REDIRECTING TO STRIPE..." : `PAY $${orderTotal.toFixed(2)}`}

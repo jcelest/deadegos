@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getShippingRate } from "@/lib/shipping";
+import { getShippingRateLabel, ShippingSettings } from "@/lib/shipping";
 
 interface OrderItem {
   id: string;
@@ -38,15 +38,25 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
   const [shippingId, setShippingId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
-    const res = await fetch("/api/admin/orders");
-    if (res.ok) {
-      setOrders(await res.json());
+    const [ordersRes, shippingRes] = await Promise.all([
+      fetch("/api/admin/orders"),
+      fetch("/api/admin/shipping"),
+    ]);
+
+    if (ordersRes.ok) {
+      setOrders(await ordersRes.json());
     }
+
+    if (shippingRes.ok) {
+      setShippingSettings(await shippingRes.json());
+    }
+
     setLoading(false);
   }, []);
 
@@ -91,8 +101,9 @@ export default function AdminOrders() {
     <div className="space-y-4">
       {orders.map((order) => {
         const shortId = order.id.slice(-8).toUpperCase();
-        const shippingLabel =
-          getShippingRate(order.shippingMethod)?.name ?? order.shippingMethod;
+        const shippingLabel = shippingSettings
+          ? getShippingRateLabel(order.shippingMethod, shippingSettings)
+          : order.shippingMethod;
         const canShip = order.status === "PAID";
 
         return (

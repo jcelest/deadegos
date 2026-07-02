@@ -5,7 +5,7 @@ import {
   parseColorImages,
   parseColors,
 } from "@/lib/product-images";
-import { calculateShippingCost } from "@/lib/shipping";
+import { calculateShippingCost, getShippingSettings } from "@/lib/shipping";
 
 export interface CheckoutLineInput {
   productId: string;
@@ -105,7 +105,8 @@ export async function validateCheckoutItems(
   }
 
   const subtotal = lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
-  const shippingCost = calculateShippingCost(subtotal, shippingMethod);
+  const shippingSettings = await getShippingSettings();
+  const shippingCost = calculateShippingCost(subtotal, shippingMethod, shippingSettings);
   const total = subtotal + shippingCost;
 
   return {

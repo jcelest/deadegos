@@ -1,7 +1,7 @@
 import sgMail from "@sendgrid/mail";
 import { Order, OrderItem } from "@prisma/client";
 import { getSiteUrl } from "@/lib/site-url";
-import { getShippingRate } from "@/lib/shipping";
+import { getShippingRateLabel, getShippingSettings } from "@/lib/shipping";
 import { getCurrentTheme } from "@/lib/theme";
 
 type OrderWithItems = Order & { items: OrderItem[] };
@@ -38,9 +38,9 @@ function orderItemsHtml(items: OrderItem[]): string {
     .join("");
 }
 
-function orderSummaryHtml(order: OrderWithItems): string {
-  const shippingLabel =
-    getShippingRate(order.shippingMethod)?.name ?? order.shippingMethod;
+async function orderSummaryHtml(order: OrderWithItems): Promise<string> {
+  const settings = await getShippingSettings();
+  const shippingLabel = getShippingRateLabel(order.shippingMethod, settings);
   const accent = getCurrentTheme().primary;
 
   return `
@@ -74,6 +74,7 @@ export async function sendOrderConfirmationEmail(
 ): Promise<void> {
   const shortId = order.id.slice(-8).toUpperCase();
   const accent = getCurrentTheme().primary;
+  const summaryHtml = await orderSummaryHtml(order);
 
   await sendEmail(
     order.email,
@@ -85,7 +86,7 @@ export async function sendOrderConfirmationEmail(
         <p style="font-size:16px;margin:0 0 16px;">Thanks for your order, ${order.customerName}.</p>
         <p style="color:#aaa;font-size:14px;margin:0 0 24px;">We've received your payment and will ship your order soon.</p>
         <h2 style="font-size:13px;letter-spacing:1px;color:#888;margin:0 0 12px;">ORDER SUMMARY</h2>
-        ${orderSummaryHtml(order)}
+        ${summaryHtml}
         <h2 style="font-size:13px;letter-spacing:1px;color:#888;margin:24px 0 12px;">SHIPPING TO</h2>
         <p style="color:#ccc;font-size:14px;line-height:1.6;margin:0 0 24px;">${addressHtml(order)}</p>
         <a href="${getSiteUrl()}/shop" style="display:inline-block;background:${accent};color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;letter-spacing:2px;font-weight:bold;">CONTINUE SHOPPING</a>
