@@ -9,6 +9,7 @@ import {
   FREE_SHIPPING_THRESHOLD,
   SHIPPING_RATES,
   calculateShippingCost,
+  formatShippingPrice,
 } from "@/lib/shipping";
 
 export default function CheckoutPageContent() {
@@ -211,7 +212,7 @@ export default function CheckoutPageContent() {
                   </div>
                 </div>
                 <span className="text-sm text-white">
-                  {qualifiesForFreeShipping ? "FREE" : `$${rate.price.toFixed(2)}`}
+                  {formatShippingPrice(rate, total)}
                 </span>
               </label>
             ))}

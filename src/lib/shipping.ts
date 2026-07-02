@@ -6,9 +6,21 @@ export interface ShippingRate {
   estimatedDays: string;
 }
 
+/** Orders at or above this subtotal always ship free (any method). */
 export const FREE_SHIPPING_THRESHOLD = 100;
 
+/**
+ * Checkout shipping methods and prices.
+ * Edit `price` below to change rates. Remove the `free` entry when the promo ends.
+ */
 export const SHIPPING_RATES: ShippingRate[] = [
+  {
+    id: "free",
+    name: "Free Shipping",
+    description: "Limited-time promotional rate",
+    price: 0,
+    estimatedDays: "5–7 business days",
+  },
   {
     id: "standard",
     name: "Standard",
@@ -37,4 +49,9 @@ export function calculateShippingCost(
 
   const rate = getShippingRate(shippingMethodId);
   return rate?.price ?? SHIPPING_RATES[0].price;
+}
+
+export function formatShippingPrice(rate: ShippingRate, subtotal: number): string {
+  if (subtotal >= FREE_SHIPPING_THRESHOLD || rate.price === 0) return "FREE";
+  return `$${rate.price.toFixed(2)}`;
 }
