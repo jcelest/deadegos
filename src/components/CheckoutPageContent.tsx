@@ -189,7 +189,7 @@ export default function CheckoutPageContent() {
                 type="checkbox"
                 checked={smsOptIn}
                 onChange={(e) => setSmsOptIn(e.target.checked)}
-                className="mt-1"
+                className="mt-0.5"
               />
               <span>Text me when my order ships (US numbers only)</span>
             </label>

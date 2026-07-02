@@ -329,7 +329,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                 type="checkbox"
                 checked={featured}
                 onChange={(e) => setFeatured(e.target.checked)}
-                className="accent-[var(--color-de-primary)]"
               />
               Featured
             </label>
@@ -338,7 +337,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                 type="checkbox"
                 checked={inStock}
                 onChange={(e) => setInStock(e.target.checked)}
-                className="accent-[var(--color-de-primary)]"
               />
               In Stock
             </label>

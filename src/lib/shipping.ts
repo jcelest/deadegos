@@ -216,15 +216,25 @@ export function validateShippingSettings(input: ShippingSettings): string[] {
     errors.push("At least one shipping rate must be enabled");
   }
 
-  if (!input.defaultMethodId || !input.rates.some((rate) => rate.id === input.defaultMethodId && rate.enabled)) {
-    errors.push("Default shipping method must be an enabled rate");
-  }
-
   return errors;
 }
 
+function normalizeShippingSettings(input: ShippingSettings): ShippingSettings {
+  const enabledRates = input.rates.filter((rate) => rate.enabled);
+  const defaultMethodId = enabledRates.some((rate) => rate.id === input.defaultMethodId)
+    ? input.defaultMethodId
+    : enabledRates[0]?.id || input.rates[0]?.id || DEFAULT_SHIPPING_SETTINGS.defaultMethodId;
+
+  return {
+    ...input,
+    freeShippingThreshold: Math.max(0, input.freeShippingThreshold),
+    defaultMethodId,
+  };
+}
+
 export async function saveShippingSettings(input: ShippingSettings): Promise<ShippingSettings> {
-  const errors = validateShippingSettings(input);
+  const normalized = normalizeShippingSettings(input);
+  const errors = validateShippingSettings(normalized);
   if (errors.length > 0) {
     throw new Error(errors.join(", "));
   }
@@ -233,14 +243,14 @@ export async function saveShippingSettings(input: ShippingSettings): Promise<Shi
     where: { id: "default" },
     create: {
       id: "default",
-      freeShippingThreshold: input.freeShippingThreshold,
-      defaultMethodId: input.defaultMethodId,
-      ratesJson: serializeShippingRates(input.rates),
+      freeShippingThreshold: normalized.freeShippingThreshold,
+      defaultMethodId: normalized.defaultMethodId,
+      ratesJson: serializeShippingRates(normalized.rates),
     },
     update: {
-      freeShippingThreshold: input.freeShippingThreshold,
-      defaultMethodId: input.defaultMethodId,
-      ratesJson: serializeShippingRates(input.rates),
+      freeShippingThreshold: normalized.freeShippingThreshold,
+      defaultMethodId: normalized.defaultMethodId,
+      ratesJson: serializeShippingRates(normalized.rates),
     },
   });
 

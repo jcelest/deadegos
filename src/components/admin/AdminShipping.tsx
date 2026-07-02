@@ -51,7 +51,15 @@ export default function AdminShipping() {
 
       const rates = [...current.rates];
       rates[index] = { ...rates[index], ...patch };
-      return { ...current, rates };
+
+      let defaultMethodId = current.defaultMethodId;
+      const updated = rates[index];
+      if (patch.enabled === false && updated.id === current.defaultMethodId) {
+        defaultMethodId =
+          rates.find((rate) => rate.enabled)?.id || rates[0]?.id || "";
+      }
+
+      return { ...current, rates, defaultMethodId };
     });
   };
 
