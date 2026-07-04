@@ -16,9 +16,15 @@ interface Order {
   id: string;
   status: string;
   email: string;
+  phone: string | null;
+  smsOptIn: boolean;
   customerName: string;
+  addressLine1: string;
+  addressLine2: string | null;
   city: string;
   state: string;
+  postalCode: string;
+  country: string;
   shippingMethod: string;
   shippingCost: number;
   subtotal: number;
@@ -27,6 +33,18 @@ interface Order {
   shippedAt: string | null;
   createdAt: string;
   items: OrderItem[];
+}
+
+function formatShippingAddress(order: Order): string[] {
+  const lines = [
+    order.customerName,
+    order.addressLine1,
+    ...(order.addressLine2 ? [order.addressLine2] : []),
+    `${order.city}, ${order.state} ${order.postalCode}`,
+    order.country,
+  ];
+
+  return lines;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -117,8 +135,14 @@ export default function AdminOrders() {
                   #{shortId} — {order.customerName}
                 </p>
                 <p className="text-sm text-white/50">{order.email}</p>
+                {order.phone && (
+                  <p className="text-sm text-white/50">
+                    {order.phone}
+                    {order.smsOptIn ? " · SMS updates on" : ""}
+                  </p>
+                )}
                 <p className="text-xs text-white/40">
-                  {new Date(order.createdAt).toLocaleString()} · {order.city}, {order.state}
+                  {new Date(order.createdAt).toLocaleString()}
                 </p>
               </div>
               <div className="text-left sm:text-right">
@@ -127,6 +151,15 @@ export default function AdminOrders() {
                 </p>
                 <p className="text-lg text-white">${order.total.toFixed(2)}</p>
               </div>
+            </div>
+
+            <div className="mb-4 space-y-1 border-t border-white/10 pt-4">
+              <p className="mb-2 text-xs tracking-widest text-white/45">SHIP TO</p>
+              {formatShippingAddress(order).map((line) => (
+                <p key={line} className="text-sm text-white/75">
+                  {line}
+                </p>
+              ))}
             </div>
 
             <div className="mb-4 space-y-1 border-t border-white/10 pt-4">
