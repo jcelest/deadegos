@@ -31,6 +31,7 @@ interface Order {
   total: number;
   trackingNumber: string | null;
   shippedAt: string | null;
+  deliveredAt: string | null;
   createdAt: string;
   items: OrderItem[];
 }
@@ -51,6 +52,7 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING: "text-yellow-400",
   PAID: "text-green-400",
   SHIPPED: "text-[var(--color-de-primary)]",
+  DELIVERED: "text-emerald-400",
   CANCELLED: "text-red-400",
 };
 
@@ -60,6 +62,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
   const [shippingId, setShippingId] = useState<string | null>(null);
+  const [deliveringId, setDeliveringId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     const [ordersRes, shippingRes] = await Promise.all([
@@ -103,6 +106,23 @@ export default function AdminOrders() {
     setShippingId(null);
   };
 
+  const handleDeliver = async (orderId: string) => {
+    if (!confirm("Mark this order as delivered and send the delivery email?")) return;
+
+    setDeliveringId(orderId);
+    const res = await fetch(`/api/admin/orders/${orderId}/deliver`, {
+      method: "PATCH",
+    });
+
+    if (res.ok) {
+      await fetchOrders();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Failed to mark order as delivered");
+    }
+    setDeliveringId(null);
+  };
+
   if (loading) {
     return <p className="py-8 text-center text-sm text-white/40">Loading orders...</p>;
   }
@@ -123,6 +143,7 @@ export default function AdminOrders() {
           ? getShippingRateLabel(order.shippingMethod, shippingSettings)
           : order.shippingMethod;
         const canShip = order.status === "PAID";
+        const canDeliver = order.status === "SHIPPED";
 
         return (
           <div
@@ -184,6 +205,11 @@ export default function AdminOrders() {
                     · Shipped {new Date(order.shippedAt).toLocaleDateString()}
                   </span>
                 )}
+                {order.deliveredAt && (
+                  <span className="ml-2 text-white/40">
+                    · Delivered {new Date(order.deliveredAt).toLocaleDateString()}
+                  </span>
+                )}
               </p>
             )}
 
@@ -207,6 +233,17 @@ export default function AdminOrders() {
                   {shippingId === order.id ? "SENDING..." : "MARK SHIPPED"}
                 </button>
               </div>
+            )}
+
+            {canDeliver && (
+              <button
+                type="button"
+                onClick={() => handleDeliver(order.id)}
+                disabled={deliveringId === order.id}
+                className="border border-emerald-500/60 bg-emerald-500/10 px-5 py-2 text-xs tracking-widest text-white hover:bg-emerald-500/20 disabled:opacity-50"
+              >
+                {deliveringId === order.id ? "SENDING..." : "MARK DELIVERED"}
+              </button>
             )}
           </div>
         );
