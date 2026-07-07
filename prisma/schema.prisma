@@ -54,6 +54,7 @@ model Order {
   trackingNumber        String?
   shippedAt             DateTime?
   deliveredAt           DateTime?
+  shippingEmailResentAt DateTime?
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
   items                 OrderItem[]

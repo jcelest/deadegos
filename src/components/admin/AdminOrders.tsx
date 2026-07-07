@@ -32,6 +32,7 @@ interface Order {
   trackingNumber: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
+  shippingEmailResentAt: string | null;
   createdAt: string;
   items: OrderItem[];
 }
@@ -63,6 +64,7 @@ export default function AdminOrders() {
   const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
   const [shippingId, setShippingId] = useState<string | null>(null);
   const [deliveringId, setDeliveringId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     const [ordersRes, shippingRes] = await Promise.all([
@@ -123,6 +125,25 @@ export default function AdminOrders() {
     setDeliveringId(null);
   };
 
+  const handleResendShipping = async (orderId: string) => {
+    if (!confirm("Resend the shipping email to this customer? This can only be done once.")) {
+      return;
+    }
+
+    setResendingId(orderId);
+    const res = await fetch(`/api/admin/orders/${orderId}/resend-shipping`, {
+      method: "PATCH",
+    });
+
+    if (res.ok) {
+      await fetchOrders();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Failed to resend shipping email");
+    }
+    setResendingId(null);
+  };
+
   if (loading) {
     return <p className="py-8 text-center text-sm text-white/40">Loading orders...</p>;
   }
@@ -144,6 +165,9 @@ export default function AdminOrders() {
           : order.shippingMethod;
         const canShip = order.status === "PAID";
         const canDeliver = order.status === "SHIPPED";
+        const canResendShipping =
+          (order.status === "SHIPPED" || order.status === "DELIVERED") &&
+          !order.shippingEmailResentAt;
 
         return (
           <div
@@ -235,15 +259,35 @@ export default function AdminOrders() {
               </div>
             )}
 
-            {canDeliver && (
-              <button
-                type="button"
-                onClick={() => handleDeliver(order.id)}
-                disabled={deliveringId === order.id}
-                className="border border-emerald-500/60 bg-emerald-500/10 px-5 py-2 text-xs tracking-widest text-white hover:bg-emerald-500/20 disabled:opacity-50"
-              >
-                {deliveringId === order.id ? "SENDING..." : "MARK DELIVERED"}
-              </button>
+            {(canDeliver || canResendShipping) && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                {canDeliver && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeliver(order.id)}
+                    disabled={deliveringId === order.id}
+                    className="border border-emerald-500/60 bg-emerald-500/10 px-5 py-2 text-xs tracking-widest text-white hover:bg-emerald-500/20 disabled:opacity-50"
+                  >
+                    {deliveringId === order.id ? "SENDING..." : "MARK DELIVERED"}
+                  </button>
+                )}
+                {canResendShipping && (
+                  <button
+                    type="button"
+                    onClick={() => handleResendShipping(order.id)}
+                    disabled={resendingId === order.id}
+                    className="border border-white/20 bg-white/5 px-5 py-2 text-xs tracking-widest text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-50"
+                  >
+                    {resendingId === order.id ? "SENDING..." : "RESEND SHIPPING EMAIL"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {order.shippingEmailResentAt && (
+              <p className="mt-3 text-xs text-white/40">
+                Shipping email resent {new Date(order.shippingEmailResentAt).toLocaleString()}
+              </p>
             )}
           </div>
         );
