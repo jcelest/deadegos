@@ -179,8 +179,12 @@ function brandEmailHtml(options: {
   `;
 }
 
+function trackingSearchUrl(trackingNumber: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(`track package ${trackingNumber}`)}`;
+}
+
 function trackingCard(trackingNumber: string, accent: string): string {
-  const trackingUrl = `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(trackingNumber)}`;
+  const trackingUrl = trackingSearchUrl(trackingNumber);
 
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(0,56,255,0.35);background-color:rgba(0,56,255,0.08);">
@@ -195,7 +199,7 @@ function trackingCard(trackingNumber: string, accent: string): string {
             </a>
           </p>
           <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#888888;">
-            Tap the number above to track your package with USPS.
+            Tap the number above to search for tracking updates.
           </p>
         </td>
       </tr>
@@ -267,7 +271,7 @@ export async function sendOrderShippedEmail(
   const cta = order.trackingNumber
     ? {
         label: "Track Package",
-        href: `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(order.trackingNumber)}`,
+        href: trackingSearchUrl(order.trackingNumber),
       }
     : { label: "Shop DeadEgos", href: `${siteUrl}/shop` };
 
